@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Result {
+  win
+  lose
+  attempt
+}
+
+enum AttackType {
+  direct
+  indirect
+  feint
+  compound
+}
+
+enum DefenseType {
+  parry
+  distance
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  name          String
+  password_hash String
+
+  notes         Note[]
+  matches       Match[]
+
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  deleted_at    DateTime?
+}
+
+model Note {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     Int
+  content     String
+
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  deleted_at  DateTime?
+}
+
+model Match {
+  id              Int       @id @default(autoincrement())
+  video_url       String
+  tournament_name String
+  date            DateTime
+  opponent_name   String
+  opponent_team   String
+  attack_attempts Int
+  user            User      @relation(fields: [user_id], references: [id])
+  user_id         Int
+
+  markings        Marking[]
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  deleted_at      DateTime?
+}
+
+model Marking {
+  id            Int          @id @default(autoincrement())
+  match         Match        @relation(fields: [match_id], references: [id])
+  match_id      Int
+  timestamp     Float
+  result        Result
+  attack_type   AttackType?
+  defense_type  DefenseType?
+
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  deleted_at    DateTime?
+}
