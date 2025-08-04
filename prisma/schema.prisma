@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
@@ -27,58 +27,58 @@ enum DefenseType {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
+  id            Int    @id @default(autoincrement())
+  email         String @unique
   name          String
   password_hash String
 
-  notes         Note[]
-  matches       Match[]
+  notes   Note[]
+  matches Match[]
 
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  deleted_at    DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 }
 
 model Note {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [user_id], references: [id])
-  user_id     Int
-  content     String
+  id      Int    @id @default(autoincrement())
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id Int
+  content String
 
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  deleted_at  DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 }
 
 model Match {
-  id              Int       @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   video_url       String
   tournament_name String
   date            DateTime
   opponent_name   String
   opponent_team   String
   attack_attempts Int
-  user            User      @relation(fields: [user_id], references: [id])
+  user            User     @relation(fields: [user_id], references: [id])
   user_id         Int
 
-  markings        Marking[]
+  markings Marking[]
 
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  deleted_at      DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 }
 
 model Marking {
-  id            Int          @id @default(autoincrement())
-  match         Match        @relation(fields: [match_id], references: [id])
-  match_id      Int
-  timestamp     Float
-  result        Result
-  attack_type   AttackType?
-  defense_type  DefenseType?
+  id           Int          @id @default(autoincrement())
+  match        Match        @relation(fields: [match_id], references: [id])
+  match_id     Int
+  timestamp    Float
+  result       Result
+  attack_type  AttackType?
+  defense_type DefenseType?
 
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
-  deleted_at    DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 }
