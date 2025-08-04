@@ -1,14 +1,14 @@
 import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 export class SignupDto {
-  @IsEmail({}, { message: '유효한 이메일 형식이어야 합니다' })
-  @IsNotEmpty({ message: '이메일은 필수입니다' })
+  @IsEmail({}, { message: 'The email must be in a valid format.' })
+  @IsNotEmpty({ message: 'Email is required.' })
   email: string;
 
-  @IsNotEmpty({ message: '이름은 필수입니다' })
+  @IsNotEmpty({ message: 'Name is required.' })
   name: string;
 
-  @MinLength(6, { message: '비밀번호는 최소 6자 이상이어야 합니다' })
-  @IsNotEmpty({ message: '비밀번호는 필수입니다' })
+  @MinLength(6, { message: 'Password must be at least 6 characters long.' })
+  @IsNotEmpty({ message: 'Password is required.' })
   password: string;
 }
