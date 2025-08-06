@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMatchRequestDto } from './dto/create-match.request';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import { CreateMatchResponseDto } from '@/modules/match/dto/create-match.response';
+import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.response';
 
 @Injectable()
 export class MatchService {
@@ -11,6 +12,7 @@ export class MatchService {
     const match = await this.prisma.match.create({
       data: {
         video_url: dto.videoLink,
+        thumbnail_url: dto.thumbnailLink,
         tournament_name: dto.tournamentName,
         tournament_date: new Date(dto.tournamentDate),
         opponent_name: dto.opponentName,
@@ -35,12 +37,12 @@ export class MatchService {
     const matches = await this.prisma.match.findMany({
       where: {
         user_id: userId,
-        deleted_at: null, // soft delete된 항목 제외
+        deleted_at: null,
       },
       orderBy: {
-        id: 'desc', // 최신순
+        id: 'desc',
       },
-      take: take + 1, // 다음 페이지 있는지 확인 위해 1개 더
+      take: take + 1,
       ...(cursor && {
         skip: 1,
         cursor: { id: cursor },
@@ -48,14 +50,23 @@ export class MatchService {
     });
 
     const hasNextPage = matches.length > take;
-    const items = hasNextPage ? matches.slice(0, -1) : matches;
+    const trimmed = hasNextPage ? matches.slice(0, -1) : matches;
+
+    const items: GetMatchListResponse[] = trimmed.map((match) => ({
+      id: match.id,
+      tournamentName: match.tournament_name,
+      opponentName: match.opponent_name,
+      myScore: match.my_score,
+      opponentScore: match.opponent_score,
+      thumbnailUrl: match.thumbnail_url,
+      tournamentDate: match.tournament_date
+    }));
 
     return {
       items,
-      nextCursor: hasNextPage ? items[items.length - 1].id : null,
+      nextCursor: hasNextPage ? trimmed[trimmed.length - 1].id : null,
     };
   }
-
   async findOne(id: number) {
     const match = await this.prisma.match.findUnique({
       where: { id },

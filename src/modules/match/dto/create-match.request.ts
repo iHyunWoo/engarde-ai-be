@@ -7,6 +7,10 @@ export class CreateMatchRequestDto {
 
   @IsNotEmpty()
   @IsString()
+  thumbnailLink: string;
+
+  @IsNotEmpty()
+  @IsString()
   tournamentName: string;
 
   @IsDateString()
