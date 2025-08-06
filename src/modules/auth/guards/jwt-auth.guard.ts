@@ -15,17 +15,24 @@ export class JwtAuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest<Request>();
-    const token = req.cookies?.['access_token'];
-    if (!token) {
-      throw new UnauthorizedException('TOKEN_MISSING');
+    const accessToken = req.cookies?.['access_token'] as string | undefined;
+    const refreshToken = req.cookies?.['refresh_token'] as string | undefined;
+
+    if (!accessToken) {
+      if (!refreshToken) {
+        // token이 모두 없으면
+        throw new UnauthorizedException('TOKEN_MISSING');
+      }
+
+      // access는 없고 refresh는 있으면
+      throw new UnauthorizedException('TOKEN_EXPIRED');
     }
 
     try {
-      const payload = this.jwtService.verify<JwtPayload>(token);
+      const payload = this.jwtService.verify<JwtPayload>(accessToken);
       req.user = payload;
       return true;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException('TOKEN_EXPIRED');
     }
   }

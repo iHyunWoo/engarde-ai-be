@@ -40,7 +40,7 @@ export class AuthController {
   @Post('refresh')
   refresh(@Req() req: Request, @Res() res: Response) {
     console.log(req.cookies);
-    const refreshToken = req.cookies?.['refresh_token'];
+    const refreshToken = req.cookies?.['refresh_token'] as string | undefined;
     if (!refreshToken) throw new UnauthorizedException('Refresh token이 없습니다');
 
     try {
