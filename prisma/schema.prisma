@@ -52,15 +52,19 @@ model Note {
 }
 
 model Match {
-  id              Int      @id @default(autoincrement())
-  video_url       String
-  tournament_name String
-  date            DateTime
-  opponent_name   String
-  opponent_team   String
-  attack_attempts Int
-  user            User     @relation(fields: [user_id], references: [id])
-  user_id         Int
+  id                           Int      @id @default(autoincrement())
+  video_url                    String
+  tournament_name              String
+  tournament_date              DateTime
+  opponent_name                String
+  opponent_team                String
+  my_score                     Int
+  opponent_score               Int
+  attack_attempt_count         Int
+  parry_attempt_count          Int
+  counter_attack_attempt_count Int
+  user                         User     @relation(fields: [user_id], references: [id])
+  user_id                      Int
 
   markings Marking[]
 

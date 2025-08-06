@@ -19,7 +19,7 @@ export class AuthService {
 
   async signup(dto: SignupDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (user) throw new ConflictException('이미 존재하는 이메일입니다');
+    if (user) throw new ConflictException('This email already exists.');
 
     const hashed = await bcrypt.hash(dto.password, 10);
     const newUser = await this.prisma.user.create({
@@ -29,27 +29,27 @@ export class AuthService {
         password_hash: hashed,
       },
     });
-    return { message: '회원가입 성공', userId: newUser.id };
+    return { userId: newUser.id };
   }
 
   async login(dto: LoginDto, res: Response) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user)
-      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다');
+      throw new UnauthorizedException('The email or password is incorrect.');
 
     const valid = await bcrypt.compare(dto.password, user.password_hash);
     if (!valid)
-      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다');
+      throw new UnauthorizedException('The email or password is incorrect.');
 
     this.issueTokens(user.id, res, dto.rememberMe);
 
-    return { message: '로그인 성공', userId: user.id };
+    return { userId: user.id, name: user.name };
   }
 
   refresh(userId: number, res: Response) {
     this.issueTokens(userId, res);
 
-    return { message: '토큰 재발급 성공' };
+    return;
   }
 
   private issueTokens(userId: number, res: Response, rememberMe = false) {

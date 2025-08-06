@@ -34,7 +34,7 @@ export class HttpErrorFilter implements ExceptionFilter {
       const msg = (exceptionResponse as HttpExceptionBody).message;
       message = Array.isArray(msg) ? msg[0] : msg;
     } else {
-      message = '알 수 없는 오류입니다';
+      message = 'An unknown error occurred.';
     }
 
     response
