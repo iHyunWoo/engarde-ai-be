@@ -12,21 +12,21 @@ import type { Response } from 'express';
 export class MatchController {
   constructor(private readonly matchService: MatchService) {}
 
-  @Post()
-  create(@User() user: JwtPayload, @Body() dto: CreateMatchRequestDto, @Res() res: Response) {
-    const result = this.matchService.create(user.userId, dto);
+  @Post() async create(@User() user: JwtPayload, @Body() dto: CreateMatchRequestDto, @Res() res: Response) {
+    const result = await this.matchService.create(user.userId, dto);
     const response = new BaseResponse(201, '생성 성공', result)
     return res.status(201).json(response)
   }
 
-  @Get()
-  findManyWithPagination(
+  @Get() async findManyWithPagination(
     @User() user: JwtPayload,
+    @Res() res: Response,
     @Query('limit', ParseIntPipe) limit: number,
-    @Query('cursor') cursor?: string
+    @Query('cursor') cursor?: string,
   ) {
-
-    return this.matchService.findManyWithPagination(user.userId, limit, cursor ? Number(cursor) : undefined);
+    const result = await this.matchService.findManyWithPagination(user.userId, limit, cursor ? Number(cursor) : undefined);
+    const response = new BaseResponse(200, '조회 성공', result)
+    return res.status(200).json(response)
   }
 
   @Get(':id')
