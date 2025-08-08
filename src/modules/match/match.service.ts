@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException, GoneException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMatchRequestDto } from './dto/create-match.request';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import { CreateMatchResponseDto } from '@/modules/match/dto/create-match.response';
@@ -56,6 +60,7 @@ export class MatchService {
       id: match.id,
       tournamentName: match.tournament_name,
       opponentName: match.opponent_name,
+      opponentTeam: match.opponent_team,
       myScore: match.my_score,
       opponentScore: match.opponent_score,
       thumbnailUrl: match.thumbnail_url,
@@ -67,13 +72,38 @@ export class MatchService {
       nextCursor: hasNextPage ? trimmed[trimmed.length - 1].id : null,
     };
   }
-  async findOne(id: number) {
+
+  async findOne(userId: number, id: number) {
     const match = await this.prisma.match.findUnique({
       where: { id },
-      include: { markings: true },
     });
-    if (!match) throw new NotFoundException('Match not found');
-    return match;
+  
+    if (!match) {
+      throw new NotFoundException('해당 경기를 찾을 수 없습니다');
+    }
+  
+    if (match.user_id !== userId) {
+      throw new ForbiddenException('이 경기에 접근할 수 없습니다');
+    }
+  
+    if (match.deleted_at) {
+      throw new GoneException('삭제된 경기입니다');
+    }
+
+    return {
+      id: match.id,
+      videoUrl: match.video_url,
+      tournamentName: match.tournament_name,
+      tournamentDate: match.tournament_date,
+      opponentName: match.opponent_name,
+      opponentTeam: match.opponent_team,
+      myScore: match.my_score,
+      opponentScore: match.opponent_score,
+      attackAttemptCount: match.attack_attempt_count,
+      parryAttemptCount: match.parry_attempt_count,
+      counterAttackAttemptCount: match.counter_attack_attempt_count,
+      createdAt: match.created_at,
+    };
   }
 
   async delete(id: number) {
