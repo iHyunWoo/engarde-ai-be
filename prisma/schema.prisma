@@ -14,16 +14,20 @@ enum Result {
   attempt
 }
 
-enum AttackType {
-  direct
-  indirect
-  feint
-  compound
+enum MarkingType {
+  none
+  lunge
+  advanced_lunge
+  fleche
+  push
+  parry
+  counter_attack
 }
 
-enum DefenseType {
-  parry
-  distance
+enum MarkingQuality {
+  good
+  bad
+  lucky
 }
 
 model User {
@@ -75,13 +79,16 @@ model Match {
 }
 
 model Marking {
-  id           Int          @id @default(autoincrement())
-  match        Match        @relation(fields: [match_id], references: [id])
-  match_id     Int
-  timestamp    Float
-  result       Result
-  attack_type  AttackType?
-  defense_type DefenseType?
+  id            Int            @id @default(autoincrement())
+  match         Match          @relation(fields: [match_id], references: [id])
+  match_id      Int
+  timestamp     Float
+  result        Result
+  my_type       MarkingType
+  opponent_type MarkingType
+  quality       MarkingQuality
+  note          String
+  remain_time   Int
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
