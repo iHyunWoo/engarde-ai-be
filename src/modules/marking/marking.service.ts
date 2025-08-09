@@ -5,12 +5,16 @@ import {
   toMarkingList,
   toMarkingResponse,
 } from '@/modules/marking/dto/marking.response';
+import { NoteService } from '@/modules/note/note.service';
 
 @Injectable()
 export class MarkingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly noteService: NoteService,
+  ) {}
 
-  async create(dto: CreateMarkingRequest) {
+  async create(userId: number, dto: CreateMarkingRequest) {
     const match = await this.prisma.match.findUnique({
       where: { id: dto.matchId },
       select: { id: true },
@@ -27,8 +31,13 @@ export class MarkingsService {
         quality: dto.quality,
         note: dto.note,
         remain_time: dto.remainTime,
+        user_id: userId
       },
     });
+    
+    if (dto.note?.trim()) {
+      this.noteService.upsert(userId, dto.note)
+    }
 
     return toMarkingResponse(created);
   }
