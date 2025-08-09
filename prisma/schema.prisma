@@ -57,8 +57,7 @@ model Note {
 
 model Match {
   id                           Int      @id @default(autoincrement())
-  video_url                    String
-  thumbnail_url                String?
+  object_name                  String   @default("")
   tournament_name              String
   tournament_date              DateTime
   opponent_name                String

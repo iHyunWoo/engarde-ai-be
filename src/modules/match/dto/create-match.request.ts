@@ -3,11 +3,7 @@ import { IsDateString, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 export class CreateMatchRequestDto {
   @IsNotEmpty()
   @IsString()
-  videoLink: string;
-
-  @IsNotEmpty()
-  @IsString()
-  thumbnailLink: string;
+  objectName: string;
 
   @IsNotEmpty()
   @IsString()
