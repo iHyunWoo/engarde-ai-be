@@ -5,6 +5,5 @@ export class GetMatchListResponse {
   opponentTeam: string;
   myScore: number;
   opponentScore: number;
-  thumbnailUrl: string | null;
   tournamentDate: Date;
 }

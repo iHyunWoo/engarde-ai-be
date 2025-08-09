@@ -15,8 +15,7 @@ export class MatchService {
   async create(user_id: number, dto: CreateMatchRequestDto): Promise<CreateMatchResponseDto> {
     const match = await this.prisma.match.create({
       data: {
-        video_url: dto.videoLink,
-        thumbnail_url: dto.thumbnailLink,
+        object_name: dto.objectName,
         tournament_name: dto.tournamentName,
         tournament_date: new Date(dto.tournamentDate),
         opponent_name: dto.opponentName,
@@ -63,7 +62,6 @@ export class MatchService {
       opponentTeam: match.opponent_team,
       myScore: match.my_score,
       opponentScore: match.opponent_score,
-      thumbnailUrl: match.thumbnail_url,
       tournamentDate: match.tournament_date
     }));
 
@@ -92,7 +90,7 @@ export class MatchService {
 
     return {
       id: match.id,
-      videoUrl: match.video_url,
+      objectName: match.object_name,
       tournamentName: match.tournament_name,
       tournamentDate: match.tournament_date,
       opponentName: match.opponent_name,
