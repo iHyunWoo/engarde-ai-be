@@ -7,7 +7,7 @@ import {
   Param,
   ParseIntPipe,
   Query,
-  Res,
+  Res, Patch, BadRequestException,
 } from '@nestjs/common';
 import { MatchService } from './match.service';
 import { CreateMatchRequestDto } from './dto/create-match.request';
@@ -62,4 +62,21 @@ export class MatchController {
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.matchService.delete(id);
   }
+
+  @Patch(':id/counter')
+  async updateCounter(
+    @Param('id', ParseIntPipe) matchId: number,
+    @Query('type') type: 'attack_attempt_count' | 'parry_attempt_count' | 'counter_attack_attempt_count',
+    @Query('delta', ParseIntPipe) delta: number,
+    @Res() res: Response,
+  ) {
+    if (!['attack_attempt_count', 'parry_attempt_count', 'counter_attack_attempt_count'].includes(type)) {
+      throw new BadRequestException('Invalid counter type');
+    }
+
+    const result = await this.matchService.updateCounter(matchId, type, delta);
+    const response = new BaseResponse(200, '변경 성공', result)
+    return res.status(200).json(response)
+  }
+
 }

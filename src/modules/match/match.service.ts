@@ -113,4 +113,22 @@ export class MatchService {
       data: { deleted_at: new Date() },
     });
   }
+
+  async updateCounter(
+    matchId: number,
+    type: 'attack_attempt_count' | 'parry_attempt_count' | 'counter_attack_attempt_count',
+    delta: number
+  ) {
+    const match = await this.prisma.match.findUnique({ where: { id: matchId } });
+    if (!match) throw new NotFoundException('Match not found');
+
+    return this.prisma.match.update({
+      where: { id: matchId },
+      data: {
+        [type]: {
+          increment: delta,
+        },
+      },
+    });
+  }
 }
