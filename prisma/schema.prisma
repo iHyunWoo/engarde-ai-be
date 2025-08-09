@@ -36,23 +36,13 @@ model User {
   name          String
   password_hash String
 
-  notes   Note[]
-  matches Match[]
-
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
-}
 
-model Note {
-  id      Int    @id @default(autoincrement())
-  user    User   @relation(fields: [user_id], references: [id])
-  user_id Int
-  content String
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+  Match   Match[]
+  Note    Note[]
+  Marking Marking[]
 }
 
 model Match {
@@ -67,14 +57,15 @@ model Match {
   attack_attempt_count         Int
   parry_attempt_count          Int
   counter_attack_attempt_count Int
-  user                         User     @relation(fields: [user_id], references: [id])
-  user_id                      Int
 
-  markings Marking[]
+  user    User @relation(fields: [user_id], references: [id])
+  user_id Int
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
+
+  Marking Marking[]
 }
 
 model Marking {
@@ -86,10 +77,28 @@ model Marking {
   my_type       MarkingType
   opponent_type MarkingType
   quality       MarkingQuality
-  note          String
   remain_time   Int
+
+  note String
+
+  user_id Int
+  user    User @relation(fields: [user_id], references: [id])
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
+}
+
+model Note {
+  id Int @id @default(autoincrement())
+
+  user_id Int
+  user    User @relation(fields: [user_id], references: [id])
+
+  text         String   @db.Citext // 대소문자 구분 X
+  last_used_at DateTime @default(now())
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@unique([user_id, text]) // 같은 유저의 동일 텍스트 중복 방지
 }
