@@ -59,10 +59,13 @@ export class AuthService {
       },
     );
 
+    const cookieDomain = process.env.COOKIE_DOMAIN || '.engarde-ai.com';
+
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       sameSite: 'lax',
       secure: true,
+      domain: cookieDomain,
       maxAge: 15 * 60 * 1000,
     });
 
@@ -70,6 +73,7 @@ export class AuthService {
       httpOnly: true,
       sameSite: 'lax',
       secure: true,
+      domain: cookieDomain,
       maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
     });
   }
