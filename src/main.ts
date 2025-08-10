@@ -22,6 +22,6 @@ async function bootstrap() {
       transform: true, // DTO 타입 자동 변환
     }),
   );
-  await app.listen(4000);
+  await app.listen(process.env.PORT ?? 8080, '0.0.0.0');
 }
 bootstrap();
