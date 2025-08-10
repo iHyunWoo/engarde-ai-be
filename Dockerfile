@@ -10,6 +10,7 @@ RUN pnpm install --frozen-lockfile
 
 # 빌드
 COPY . .
+RUN pnpm prisma generate
 RUN pnpm build:docker
 
 # 실행 환경 의존성만 남기기
