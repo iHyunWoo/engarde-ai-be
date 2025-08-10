@@ -9,7 +9,7 @@ async function bootstrap() {
   app.use(cookieParser());
   app.useGlobalFilters(new HttpErrorFilter());
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://www.engarde-ai.com/'],
+    origin: ['http://localhost:3000', 'https://www.engarde-ai.com'],
     credentials: true,
   });
 
