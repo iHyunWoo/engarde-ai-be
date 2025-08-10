@@ -10,6 +10,7 @@
     "dev": "pnpm predev && nest start --watch",
     "prebuild": "cp .env.production .env",
     "build": "pnpm prebuild && nest build",
+    "build:docker": "nest build",
     "start": "pnpm build && node dist/main",
     "migrate:dev": "cp .env.development .env && npx prisma migrate dev",
     "migrate:prod": "cp .env.production .env && npx prisma migrate deploy",
