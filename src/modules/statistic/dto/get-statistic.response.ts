@@ -7,7 +7,9 @@ class AttemptDto {
   attackAttemptCount: number;
   parryAttemptCount: number;
   counterAttackAttemptCount: number;
-  winCount: number;
+  attackWinCount: number;
+  parryWinCount: number;
+  counterAttackWinCount: number;
   topNotes: TopNoteDto[];
 }
 

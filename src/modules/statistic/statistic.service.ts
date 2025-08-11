@@ -44,14 +44,23 @@ export class StatisticService {
       })
 
       // win 마킹 수
-      const winCount = await this.prisma.marking.count({
+      const winByType = await this.prisma.marking.groupBy({
+        by: ["my_type"],
         where: {
           user_id: userId,
           match_id: { in: matchIds },
           result: 'win',
           deleted_at: null,
-        }
+        },
+        _count: { _all: true },
       })
+
+      const winCountByType = (type: MarkingType) => {
+        return winByType.find(marking => marking.my_type === type)?._count._all ?? 0
+      }
+      const attackWinCount = winCountByType('lunge') + winCountByType('advanced_lunge') + winCountByType('fleche') + winCountByType('push')
+      const parryWinCount = winCountByType('parry')
+      const counterAttackWinCount = winCountByType('counter_attack')
 
       // 상위 노트 3개
       const notes = await this.prisma.marking.groupBy({
@@ -76,7 +85,9 @@ export class StatisticService {
         attackAttemptCount: agg._sum.attack_attempt_count ?? 0,
         parryAttemptCount: agg._sum.parry_attempt_count ?? 0,
         counterAttackAttemptCount: agg._sum.counter_attack_attempt_count ?? 0,
-        winCount,
+        attackWinCount,
+        parryWinCount,
+        counterAttackWinCount,
         topNotes: topNotes,
       };
     }
