@@ -8,5 +8,6 @@ import { AuthModule } from '@/modules/auth/auth.module';
   imports: [AuthModule, NoteModule],
   controllers: [MarkingsController],
   providers: [MarkingsService],
+  exports: [MarkingsService]
 })
 export class MarkingModule {}
