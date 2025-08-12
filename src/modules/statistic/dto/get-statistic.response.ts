@@ -10,7 +10,11 @@ class AttemptDto {
   attackWinCount: number;
   parryWinCount: number;
   counterAttackWinCount: number;
-  topNotes: TopNoteDto[];
+  topNotesByType?: {
+    attack: TopNoteDto[];
+    parry: TopNoteDto[];
+    counterAttack: TopNoteDto[];
+  };
 }
 
 class LoseDto {
@@ -20,7 +24,14 @@ class LoseDto {
   pushLoseCount: number;
   parryLoseCount: number;
   counterAttackLoseCount: number;
-  topNotes: TopNoteDto[];
+  topNotesByType?: {
+    lunge: TopNoteDto[];
+    advancedLunge: TopNoteDto[];
+    fleche: TopNoteDto[];
+    push: TopNoteDto[];
+    parry: TopNoteDto[];
+    counter: TopNoteDto[];
+  }
 }
 
 export class GetStatisticResponse {

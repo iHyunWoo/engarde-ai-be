@@ -1,33 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
-import { GetStatisticRequest, StatsScope } from '@/modules/statistic/dto/get-statistic.request';
+import {
+  GetStatisticRequest,
+  StatsScope,
+} from '@/modules/statistic/dto/get-statistic.request';
 import { GetStatisticResponse } from '@/modules/statistic/dto/get-statistic.response';
 import { MarkingType } from '@prisma/client';
+import { toTopNotes } from '@/modules/statistic/lib/to-top-notes';
 
 @Injectable()
 export class StatisticService {
-  constructor(private readonly prisma: PrismaService) {
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
-  async getStatistics(
-    userId: number,
-    query: GetStatisticRequest
-  ) {
-    const { from: fromString, to: toString, scope } = query
-    const from = new Date(fromString)
-    const to = new Date(toString)
+  async getStatistics(userId: number, query: GetStatisticRequest) {
+    const { from: fromString, to: toString, scope } = query;
+    const from = new Date(fromString);
+    const to = new Date(toString);
 
     const matchWhere = {
       user_id: userId,
       tournament_date: { gte: from, lte: to },
-      deleted_at: null
-    }
+      deleted_at: null,
+    };
 
     const matches = await this.prisma.match.findMany({
       select: { id: true },
-      where: matchWhere
-    })
-    const matchIds = matches.map(match => match.id);
+      where: matchWhere,
+    });
+    const matchIds = matches.map((match) => match.id);
 
     const res: GetStatisticResponse = {};
 
@@ -40,12 +40,12 @@ export class StatisticService {
           attack_attempt_count: true,
           parry_attempt_count: true,
           counter_attack_attempt_count: true,
-        }
-      })
+        },
+      });
 
       // win 마킹 수
       const winByType = await this.prisma.marking.groupBy({
-        by: ["my_type"],
+        by: ['my_type'],
         where: {
           user_id: userId,
           match_id: { in: matchIds },
@@ -53,33 +53,68 @@ export class StatisticService {
           deleted_at: null,
         },
         _count: { _all: true },
-      })
+      });
 
       const winCountByType = (type: MarkingType) => {
-        return winByType.find(marking => marking.my_type === type)?._count._all ?? 0
-      }
-      const attackWinCount = winCountByType('lunge') + winCountByType('advanced_lunge') + winCountByType('fleche') + winCountByType('push')
-      const parryWinCount = winCountByType('parry')
-      const counterAttackWinCount = winCountByType('counter_attack')
+        return (
+          winByType.find((marking) => marking.my_type === type)?._count._all ??
+          0
+        );
+      };
+      const attackWinCount =
+        winCountByType('lunge') +
+        winCountByType('advanced_lunge') +
+        winCountByType('fleche') +
+        winCountByType('push');
+      const parryWinCount = winCountByType('parry');
+      const counterAttackWinCount = winCountByType('counter_attack');
 
       // 상위 노트 3개
-      const notes = await this.prisma.marking.groupBy({
-        by: ['note'],
-        where: {
-          user_id: userId,
-          match_id: { in: matchIds },
-          result: 'win',
-          deleted_at: null,
-          note: { not: '' },
-        },
-        _count: { note: true },
-        orderBy: { _count: { note: 'desc' } },
-        take: 3
-      })
-
-      
-      const topNotes = notes
-        .map(n => ({ note: n.note, count: n._count.note }))
+      const [attackNotesRaw, parryNotesRaw, counterNotesRaw] =
+        await Promise.all([
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: { in: ['lunge', 'advanced_lunge', 'fleche', 'push'] },
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: 'parry',
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: 'counter_attack',
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+        ]);
 
       res.attempt = {
         attackAttemptCount: agg._sum.attack_attempt_count ?? 0,
@@ -88,7 +123,11 @@ export class StatisticService {
         attackWinCount,
         parryWinCount,
         counterAttackWinCount,
-        topNotes: topNotes,
+        topNotesByType: {
+          attack: toTopNotes(attackNotesRaw),
+          parry: toTopNotes(parryNotesRaw),
+          counterAttack: toTopNotes(counterNotesRaw)
+        },
       };
     }
 
@@ -100,31 +139,105 @@ export class StatisticService {
           user_id: userId,
           match_id: { in: matchIds },
           result: 'lose',
-          deleted_at: null
+          deleted_at: null,
         },
-        _count: { opponent_type: true }
-      })
+        _count: { opponent_type: true },
+      });
 
       const loseCountByType = (type: MarkingType) => {
-        return loseByType.find(marking => marking.opponent_type === type)?._count.opponent_type ?? 0;
-      }
+        return (
+          loseByType.find((marking) => marking.opponent_type === type)?._count
+            .opponent_type ?? 0
+        );
+      };
 
-      const notes = await this.prisma.marking.groupBy({
-        by: ['note'],
-        where: {
-          user_id: userId,
-          match_id: { in: matchIds },
-          result: 'lose',
-          deleted_at: null,
-          note: { not: '' },
-        },
-        _count: { note: true },
-        orderBy: { _count: { note: 'desc' } },
-        take: 3,
-      })
-
-      const topNotes = notes
-        .map(n => ({ note: n.note, count: n._count.note }))
+      const [lungeNotesRaw, advancedLungeNotesRaw, flecheNotesRaw, pushNotesRaw, parryNotesRaw, counterNotesRaw] =
+        await Promise.all([
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: 'lunge',
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: 'advanced_lunge',
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: 'fleche',
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: 'push',
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: 'parry',
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+          this.prisma.marking.groupBy({
+            by: ['note'],
+            where: {
+              user_id: userId,
+              match_id: { in: matchIds },
+              result: 'win',
+              deleted_at: null,
+              note: { not: '' },
+              my_type: 'counter_attack',
+            },
+            _count: { note: true },
+            orderBy: { _count: { note: 'desc' } },
+            take: 3,
+          }),
+        ]);
 
       res.lose = {
         lungeLoseCount: loseCountByType('lunge'),
@@ -133,11 +246,17 @@ export class StatisticService {
         pushLoseCount: loseCountByType('push'),
         parryLoseCount: loseCountByType('parry'),
         counterAttackLoseCount: loseCountByType('counter_attack'),
-        topNotes: topNotes
-      }
+        topNotesByType: {
+          lunge: toTopNotes(lungeNotesRaw),
+          advancedLunge: toTopNotes(advancedLungeNotesRaw),
+          fleche: toTopNotes(flecheNotesRaw),
+          push: toTopNotes(pushNotesRaw),
+          parry: toTopNotes(parryNotesRaw),
+          counter: toTopNotes(counterNotesRaw),
+        }
+      };
     }
 
     return res;
   }
-
 }
