@@ -36,13 +36,13 @@ export class MarkingsController {
   async list(@Query('matchId') matchId: string, @Res() res: Response) {
     const result = await this.markingsService.listByMatch(Number(matchId));
     const response = new BaseResponse(200, '조회 성공', result);
-    return res.status(201).json(response);
+    return res.status(200).json(response);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @Res() res: Response) {
     const result = await this.markingsService.remove(Number(id));
     const response = new BaseResponse(200, '삭제 성공', result);
-    return res.status(201).json(response);
+    return res.status(200).json(response);
   }
 }
