@@ -34,13 +34,30 @@ export class MatchService {
     }
   }
 
-  async findManyWithPagination(userId: number, limit: number, cursor?: number) {
+  async findManyWithPagination(
+    userId: number,
+    limit: number,
+    cursor?: number,
+    from?: Date,
+    to?: Date,
+  ) {
     const take = limit ?? 10;
+
+    const dateRange =
+      from || to
+        ? {
+          tournament_date: {
+            ...(from && { gte: new Date(from) }),
+            ...(to && { lte: new Date(to) }),
+          },
+        }
+        : undefined;
 
     const matches = await this.prisma.match.findMany({
       where: {
         user_id: userId,
         deleted_at: null,
+        ...(dateRange ?? {}),
       },
       orderBy: {
         id: 'desc',

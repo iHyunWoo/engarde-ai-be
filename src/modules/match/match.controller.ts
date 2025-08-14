@@ -16,6 +16,7 @@ import type { JwtPayload } from '@/modules/auth/guards/jwt-payload';
 import { Authenticated } from '@/shared/decorators/authenticated.decorator';
 import { BaseResponse } from '@/shared/dto/base-response.dto';
 import type { Response } from 'express';
+import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request';
 
 @Authenticated()
 @Controller('matches')
@@ -35,13 +36,15 @@ export class MatchController {
   @Get() async findManyWithPagination(
     @User() user: JwtPayload,
     @Res() res: Response,
-    @Query('limit', ParseIntPipe) limit: number,
-    @Query('cursor') cursor?: string,
+    @Query() query: GetMatchListRequest,
   ) {
+    const { limit, cursor, from, to } = query;
     const result = await this.matchService.findManyWithPagination(
       user.userId,
       limit,
       cursor ? Number(cursor) : undefined,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
     );
     const response = new BaseResponse(200, '조회 성공', result);
     return res.status(200).json(response);
