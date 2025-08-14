@@ -30,7 +30,9 @@ export class StatisticService {
     });
     const matchIds = matches.map((match) => match.id);
 
-    const res: GetStatisticResponse = {};
+    const res: GetStatisticResponse = {
+      matchCount: matches.length
+    };
 
     // ATTEMPT
     if (scope === StatsScope.ALL || scope === StatsScope.ATTEMPT) {

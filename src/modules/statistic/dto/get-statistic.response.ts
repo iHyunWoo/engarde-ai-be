@@ -35,6 +35,7 @@ class LoseDto {
 }
 
 export class GetStatisticResponse {
+  matchCount: number;
   attempt?: AttemptDto;
   lose?: LoseDto;
 }
