@@ -34,6 +34,40 @@ export class MatchService {
     }
   }
 
+  async update(userId: number, matchId: number, dto: CreateMatchRequestDto): Promise<CreateMatchResponseDto> {
+    const match = await this.prisma.match.update({
+      where: {
+        id: matchId,
+        user_id: userId,
+        deleted_at: null
+      },
+      data: {
+        object_name: dto.objectName,
+        tournament_name: dto.tournamentName,
+        tournament_date: new Date(dto.tournamentDate),
+        opponent_name: dto.opponentName,
+        opponent_team: dto.opponentTeam,
+        my_score: dto.myScore,
+        opponent_score: dto.opponentScore,
+      }
+    })
+
+    return {
+      id: match.id
+    }
+  }
+
+  async delete(userId: number, matchId: number) {
+    return await this.prisma.match.update({
+      where: {
+        id: matchId,
+        user_id: userId,
+        deleted_at: null
+      },
+      data: { deleted_at: new Date() },
+    })
+  }
+
   async findManyWithPagination(
     userId: number,
     limit: number,
@@ -119,16 +153,6 @@ export class MatchService {
       counterAttackAttemptCount: match.counter_attack_attempt_count,
       createdAt: match.created_at,
     };
-  }
-
-  async delete(id: number) {
-    const match = await this.prisma.match.findUnique({ where: { id } });
-    if (!match) throw new NotFoundException('Match not found');
-
-    return this.prisma.match.update({
-      where: { id },
-      data: { deleted_at: new Date() },
-    });
   }
 
   async updateCounter(

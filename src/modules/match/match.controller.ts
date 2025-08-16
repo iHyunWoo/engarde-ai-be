@@ -7,7 +7,7 @@ import {
   Param,
   ParseIntPipe,
   Query,
-  Res, Patch, BadRequestException,
+  Res, Patch, BadRequestException, Put,
 } from '@nestjs/common';
 import { MatchService } from './match.service';
 import { CreateMatchRequestDto } from './dto/create-match.request';
@@ -31,6 +31,27 @@ export class MatchController {
     const result = await this.matchService.create(user.userId, dto);
     const response = new BaseResponse(201, '생성 성공', result);
     return res.status(201).json(response);
+  }
+
+  @Put(':id') async update(
+    @User() user: JwtPayload,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateMatchRequestDto,
+    @Res() res: Response
+  )  {
+    const result = await this.matchService.update(user.userId, id, dto);
+    const response = new BaseResponse(200, '수정 성공', result);
+    return res.status(200).json(response);
+  }
+
+  @Delete(':id') async delete(
+    @User() user: JwtPayload,
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response
+  ) {
+    await this.matchService.delete(user.userId, id);
+    const response = new BaseResponse(200, '삭제 성공');
+    return res.status(200).json(response);
   }
 
   @Get() async findManyWithPagination(
@@ -59,11 +80,6 @@ export class MatchController {
     const result = await this.matchService.findOne(user.userId, id);
     const response = new BaseResponse(200, '조회 성공', result)
     return res.status(200).json(response)
-  }
-
-  @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number) {
-    return this.matchService.delete(id);
   }
 
   @Patch(':id/counter')
