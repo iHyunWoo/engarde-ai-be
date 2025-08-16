@@ -11,13 +11,13 @@ import { GetSignedUrlQuery } from '@/modules/file/dto/get-signed-url.query';
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
-  @TypedRoute.Post('write-signed-url')
+  @TypedRoute.Post('write')
   async getWriteSignedUrl(@TypedBody() dto: PostSignedUrlRequestDto) {
     const result = await this.fileService.issueWriteSignedUrl(dto.fileName, dto.contentType);
     return new BaseResponse(200, '발급 성공', result);
   }
 
-  @TypedRoute.Get('read-signed-url')
+  @TypedRoute.Get('read')
   async getReadSignedUrl(
     @TypedQuery() query: GetSignedUrlQuery
   ) {
