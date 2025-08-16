@@ -1,7 +1,5 @@
 import {
-  ForbiddenException, GoneException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { CreateMatchRequest } from './dto/create-match.request';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
@@ -28,6 +26,43 @@ export class MatchService {
       data: mapCreateReqToMatch(userId, dto),
     });
     return { id: match.id };
+  }
+
+  async update(userId: number, matchId: number, dto: CreateMatchRequest): Promise<CreateMatchResponseDto> {
+    const match = await this.prisma.match.update({
+      where: {
+        id: matchId,
+        user_id: userId,
+        deleted_at: null
+      },
+      data: {
+        object_name: dto.objectName,
+        tournament_name: dto.tournamentName,
+        tournament_date: new Date(dto.tournamentDate),
+        opponent_name: dto.opponentName,
+        opponent_team: dto.opponentTeam,
+        my_score: dto.myScore,
+        opponent_score: dto.opponentScore,
+      }
+    })
+
+    return {
+      id: match.id
+    }
+  }
+
+  async delete(userId: number, id: number): Promise<DeleteMatchResponse> {
+    const match = await this.prisma.match.findUnique({ where: { id } });
+    if (!match) throw new AppError('MATCH_NOT_FOUND');
+    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
+    if (match.deleted_at) throw new AppError('MATCH_GONE');
+
+    const updated = await this.prisma.match.update({
+      where: { id },
+      data: { deleted_at: new Date() },
+    });
+
+    return mapToDeleteRes(updated);
   }
 
   async findManyWithPagination(
@@ -81,20 +116,6 @@ export class MatchService {
     if (match.deleted_at) throw new AppError('MATCH_GONE');
 
     return mapToGetMatchRes(match);
-  }
-
-  async delete(userId: number, id: number): Promise<DeleteMatchResponse> {
-    const match = await this.prisma.match.findUnique({ where: { id } });
-    if (!match) throw new AppError('MATCH_NOT_FOUND');
-    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
-    if (match.deleted_at) throw new AppError('MATCH_GONE');
-
-    const updated = await this.prisma.match.update({
-      where: { id },
-      data: { deleted_at: new Date() },
-    });
-
-    return mapToDeleteRes(updated);
   }
 
   async updateCounter(

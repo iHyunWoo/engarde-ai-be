@@ -55,20 +55,28 @@ export class MatchController {
     return new BaseResponse(200, '조회 성공', result)
   }
 
-  @TypedRoute.Delete(':id')
-  async delete(
+  @TypedRoute.Put(':id') async update(
     @User() user: JwtPayload,
-    @TypedParam('id') id: number
-  ) {
-    const result = await this.matchService.delete(user.userId, id);
-    return new BaseResponse(200, '삭제 성공', result)
+    @TypedParam('id') id: number,
+    @TypedBody() dto: CreateMatchRequest,
+  )  {
+    const result = await this.matchService.update(user.userId, id, dto);
+    return new BaseResponse(200, '수정 성공', result);
   }
 
-  @Patch(':id/counter')
+  @TypedRoute.Delete(':id') async delete(
+    @User() user: JwtPayload,
+    @TypedParam('id') id: number,
+  ) {
+    await this.matchService.delete(user.userId, id);
+    return  new BaseResponse(200, '삭제 성공');
+  }
+
+  @TypedRoute.Patch(':id/counter')
   async updateCounter(
     @User() user: JwtPayload,
-    @Param('id', ParseIntPipe) matchId: number,
-    @Query('type') type: 'attack_attempt_count' | 'parry_attempt_count' | 'counter_attack_attempt_count',
+    @TypedParam('id') matchId: number,
+    @TypedQuery() type: 'attack_attempt_count' | 'parry_attempt_count' | 'counter_attack_attempt_count',
     @Query('delta', ParseIntPipe) delta: number,
   ) {
     if (!['attack_attempt_count', 'parry_attempt_count', 'counter_attack_attempt_count'].includes(type)) {
