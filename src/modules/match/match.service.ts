@@ -16,6 +16,7 @@ import { DeleteMatchResponse } from '@/modules/match/dto/delete-match.response';
 import { GetMatchResponse } from '@/modules/match/dto/get-match.response';
 import { UpdateCounterResponse } from '@/modules/match/dto/update-counter.response';
 import { AppError } from '@/shared/error/app-error';
+import { UpdateCounterQuery } from '@/modules/match/dto/update-counter.query';
 
 @Injectable()
 export class MatchService {
@@ -29,11 +30,14 @@ export class MatchService {
   }
 
   async update(userId: number, matchId: number, dto: CreateMatchRequest): Promise<CreateMatchResponseDto> {
-    const match = await this.prisma.match.update({
+    const match = await this.prisma.match.findUnique({ where: { id: matchId } });
+    if (!match) throw new AppError('MATCH_NOT_FOUND');
+    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
+    if (match.deleted_at) throw new AppError('MATCH_GONE');
+
+    const updated = await this.prisma.match.update({
       where: {
         id: matchId,
-        user_id: userId,
-        deleted_at: null
       },
       data: {
         object_name: dto.objectName,
@@ -47,7 +51,7 @@ export class MatchService {
     })
 
     return {
-      id: match.id
+      id: updated.id
     }
   }
 
@@ -121,8 +125,7 @@ export class MatchService {
   async updateCounter(
     userId: number,
     matchId: number,
-    type: 'attack_attempt_count' | 'parry_attempt_count' | 'counter_attack_attempt_count',
-    delta: number,
+    query: UpdateCounterQuery
   ): Promise<UpdateCounterResponse> {
     const match = await this.prisma.match.findUnique({ where: { id: matchId } });
     if (!match) throw new AppError('MATCH_NOT_FOUND');
@@ -131,7 +134,7 @@ export class MatchService {
 
     const updated = await this.prisma.match.update({
       where: { id: matchId },
-      data: { [type]: { increment: delta } },
+      data: { [query.type]: { increment: query.delta } },
     });
 
     return mapToUpdateCounterRes(updated);

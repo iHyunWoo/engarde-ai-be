@@ -1,9 +1,5 @@
 import {
-  Controller,
-  Param,
-  ParseIntPipe,
-  Query,
-  Patch, HttpCode,
+  Controller, HttpCode,
 } from '@nestjs/common';
 import { MatchService } from './match.service';
 import { CreateMatchRequest } from './dto/create-match.request';
@@ -14,6 +10,7 @@ import { BaseResponse } from '@/shared/dto/base-response.dto';
 import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request';
 import { AppError } from '@/shared/error/app-error';
 import { TypedBody, TypedParam, TypedQuery, TypedRoute } from '@nestia/core';
+import { UpdateCounterQuery } from '@/modules/match/dto/update-counter.query';
 
 @Authenticated()
 @Controller('matches')
@@ -76,14 +73,13 @@ export class MatchController {
   async updateCounter(
     @User() user: JwtPayload,
     @TypedParam('id') matchId: number,
-    @TypedQuery() type: 'attack_attempt_count' | 'parry_attempt_count' | 'counter_attack_attempt_count',
-    @Query('delta', ParseIntPipe) delta: number,
+    @TypedQuery() query: UpdateCounterQuery
   ) {
-    if (!['attack_attempt_count', 'parry_attempt_count', 'counter_attack_attempt_count'].includes(type)) {
+    if (!['attack_attempt_count', 'parry_attempt_count', 'counter_attack_attempt_count'].includes(query.type)) {
       throw new AppError('MATCH_INVALID_COUNTER_TYPE');
     }
 
-    const result = await this.matchService.updateCounter(user.userId, matchId, type, delta);
+    const result = await this.matchService.updateCounter(user.userId, matchId, query);
     return new BaseResponse(200, '변경 성공', result)
   }
 
