@@ -17,13 +17,11 @@ export class StatisticController {
   async getStatistics(
     @User() user: JwtPayload,
     @Query() query: GetStatisticRequest,
-    @Res() res: Response,
   ) {
     const result = await this.statisticService.getStatistics(
       user.userId,
       query
     );
-    const response = new BaseResponse(200, '조회 성공', result);
-    return res.status(200).json(response);
+    return new BaseResponse(200, '조회 성공', result);
   }
 }

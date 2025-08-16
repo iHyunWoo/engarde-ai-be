@@ -3,35 +3,31 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateMatchRequestDto } from './dto/create-match.request';
+import { CreateMatchRequest } from './dto/create-match.request';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import { CreateMatchResponseDto } from '@/modules/match/dto/create-match.response';
 import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.response';
+import {
+  mapCreateReqToMatch,
+  mapToDeleteRes,
+  mapToGetMatchListRes,
+  mapToGetMatchRes, mapToUpdateCounterRes,
+} from '@/modules/match/mapper/match.mapper';
+import { CursorResponse } from '@/shared/dto/cursor-response';
+import { DeleteMatchResponse } from '@/modules/match/dto/delete-match.response';
+import { GetMatchResponse } from '@/modules/match/dto/get-match.response';
+import { UpdateCounterResponse } from '@/modules/match/dto/update-counter.response';
+import { AppError } from '@/shared/error/app-error';
 
 @Injectable()
 export class MatchService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(user_id: number, dto: CreateMatchRequestDto): Promise<CreateMatchResponseDto> {
+  async create(userId: number, dto: CreateMatchRequest): Promise<CreateMatchResponseDto> {
     const match = await this.prisma.match.create({
-      data: {
-        object_name: dto.objectName,
-        tournament_name: dto.tournamentName,
-        tournament_date: new Date(dto.tournamentDate),
-        opponent_name: dto.opponentName,
-        opponent_team: dto.opponentTeam,
-        my_score: dto.myScore,
-        opponent_score: dto.opponentScore,
-        attack_attempt_count: 0,
-        parry_attempt_count: 0,
-        counter_attack_attempt_count: 0,
-        user_id,
-      }
+      data: mapCreateReqToMatch(userId, dto),
     });
-
-    return {
-      id: match.id
-    }
+    return { id: match.id };
   }
 
   async findManyWithPagination(
@@ -40,7 +36,7 @@ export class MatchService {
     cursor?: number,
     from?: Date,
     to?: Date,
-  ) {
+  ): Promise<CursorResponse<GetMatchListResponse>> {
     const take = limit ?? 10;
 
     const dateRange =
@@ -72,80 +68,51 @@ export class MatchService {
     const hasNextPage = matches.length > take;
     const trimmed = hasNextPage ? matches.slice(0, -1) : matches;
 
-    const items: GetMatchListResponse[] = trimmed.map((match) => ({
-      id: match.id,
-      tournamentName: match.tournament_name,
-      opponentName: match.opponent_name,
-      opponentTeam: match.opponent_team,
-      myScore: match.my_score,
-      opponentScore: match.opponent_score,
-      tournamentDate: match.tournament_date
-    }));
-
     return {
-      items,
+      items: trimmed.map(mapToGetMatchListRes),
       nextCursor: hasNextPage ? trimmed[trimmed.length - 1].id : null,
     };
   }
 
-  async findOne(userId: number, id: number) {
-    const match = await this.prisma.match.findUnique({
-      where: { id },
-    });
-  
-    if (!match) {
-      throw new NotFoundException('해당 경기를 찾을 수 없습니다');
-    }
-  
-    if (match.user_id !== userId) {
-      throw new ForbiddenException('이 경기에 접근할 수 없습니다');
-    }
-  
-    if (match.deleted_at) {
-      throw new GoneException('삭제된 경기입니다');
-    }
+  async findOne(userId: number, id: number): Promise<GetMatchResponse> {
+    const match = await this.prisma.match.findUnique({ where: { id } });
+    if (!match) throw new AppError('MATCH_NOT_FOUND');
+    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
+    if (match.deleted_at) throw new AppError('MATCH_GONE');
 
-    return {
-      id: match.id,
-      objectName: match.object_name,
-      tournamentName: match.tournament_name,
-      tournamentDate: match.tournament_date,
-      opponentName: match.opponent_name,
-      opponentTeam: match.opponent_team,
-      myScore: match.my_score,
-      opponentScore: match.opponent_score,
-      attackAttemptCount: match.attack_attempt_count,
-      parryAttemptCount: match.parry_attempt_count,
-      counterAttackAttemptCount: match.counter_attack_attempt_count,
-      createdAt: match.created_at,
-    };
+    return mapToGetMatchRes(match);
   }
 
-  async delete(id: number) {
+  async delete(userId: number, id: number): Promise<DeleteMatchResponse> {
     const match = await this.prisma.match.findUnique({ where: { id } });
-    if (!match) throw new NotFoundException('Match not found');
+    if (!match) throw new AppError('MATCH_NOT_FOUND');
+    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
+    if (match.deleted_at) throw new AppError('MATCH_GONE');
 
-    return this.prisma.match.update({
+    const updated = await this.prisma.match.update({
       where: { id },
       data: { deleted_at: new Date() },
     });
+
+    return mapToDeleteRes(updated);
   }
 
   async updateCounter(
+    userId: number,
     matchId: number,
     type: 'attack_attempt_count' | 'parry_attempt_count' | 'counter_attack_attempt_count',
-    delta: number
-  ) {
+    delta: number,
+  ): Promise<UpdateCounterResponse> {
     const match = await this.prisma.match.findUnique({ where: { id: matchId } });
-    if (!match) throw new NotFoundException('Match not found');
+    if (!match) throw new AppError('MATCH_NOT_FOUND');
+    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
+    if (match.deleted_at) throw new AppError('MATCH_GONE');
 
-    return this.prisma.match.update({
+    const updated = await this.prisma.match.update({
       where: { id: matchId },
-      data: {
-        [type]: {
-          increment: delta,
-        },
-      },
+      data: { [type]: { increment: delta } },
     });
+
+    return mapToUpdateCounterRes(updated);
   }
 }

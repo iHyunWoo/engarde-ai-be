@@ -1,6 +1,6 @@
 import { IsDateString, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
-export class CreateMatchRequestDto {
+export class CreateMatchRequest {
   @IsNotEmpty()
   @IsString()
   objectName: string;

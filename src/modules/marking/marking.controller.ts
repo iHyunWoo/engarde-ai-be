@@ -2,7 +2,7 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
+  Get, HttpCode,
   Param,
   Post,
   Query,
@@ -22,27 +22,24 @@ export class MarkingsController {
   constructor(private readonly markingsService: MarkingsService) {}
 
   @Post()
+  @HttpCode(201)
   async create(
     @User() user: JwtPayload,
     @Body() dto: CreateMarkingRequest,
-    @Res() res: Response
   ) {
     const result = await this.markingsService.create(user.userId, dto);
-    const response = new BaseResponse(201, '생성 성공', result);
-    return res.status(201).json(response);
+    return new BaseResponse(201, '생성 성공', result);
   }
 
   @Get()
-  async list(@Query('matchId') matchId: string, @Res() res: Response) {
+  async list(@Query('matchId') matchId: string) {
     const result = await this.markingsService.listByMatch(Number(matchId));
-    const response = new BaseResponse(200, '조회 성공', result);
-    return res.status(200).json(response);
+    return new BaseResponse(200, '조회 성공', result);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Res() res: Response) {
+  async remove(@Param('id') id: string) {
     const result = await this.markingsService.remove(Number(id));
-    const response = new BaseResponse(200, '삭제 성공', result);
-    return res.status(200).json(response);
+    return new BaseResponse(200, '삭제 성공', result);
   }
 }

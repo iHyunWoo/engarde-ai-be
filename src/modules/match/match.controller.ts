@@ -7,35 +7,36 @@ import {
   Param,
   ParseIntPipe,
   Query,
-  Res, Patch, BadRequestException,
+  Res, Patch, BadRequestException, HttpCode,
 } from '@nestjs/common';
 import { MatchService } from './match.service';
-import { CreateMatchRequestDto } from './dto/create-match.request';
+import { CreateMatchRequest } from './dto/create-match.request';
 import { User } from '@/shared/decorators/user.decorator';
 import type { JwtPayload } from '@/modules/auth/guards/jwt-payload';
 import { Authenticated } from '@/shared/decorators/authenticated.decorator';
 import { BaseResponse } from '@/shared/dto/base-response.dto';
 import type { Response } from 'express';
 import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request';
+import { AppError } from '@/shared/error/app-error';
 
 @Authenticated()
 @Controller('matches')
 export class MatchController {
   constructor(private readonly matchService: MatchService) {}
 
-  @Post() async create(
+  @Post()
+  @HttpCode(201)
+  async create(
     @User() user: JwtPayload,
-    @Body() dto: CreateMatchRequestDto,
-    @Res() res: Response,
+    @Body() dto: CreateMatchRequest,
   ) {
     const result = await this.matchService.create(user.userId, dto);
-    const response = new BaseResponse(201, '생성 성공', result);
-    return res.status(201).json(response);
+    return new BaseResponse(201, '생성 성공', result);
   }
 
-  @Get() async findManyWithPagination(
+  @Get()
+  async findManyWithPagination(
     @User() user: JwtPayload,
-    @Res() res: Response,
     @Query() query: GetMatchListRequest,
   ) {
     const { limit, cursor, from, to } = query;
@@ -46,40 +47,40 @@ export class MatchController {
       from ? new Date(from) : undefined,
       to ? new Date(to) : undefined,
     );
-    const response = new BaseResponse(200, '조회 성공', result);
-    return res.status(200).json(response);
+    return new BaseResponse(200, '조회 성공', result);
   }
 
   @Get(':id')
   async findOne(
     @User() user: JwtPayload,
-    @Res() res: Response,
     @Param('id', ParseIntPipe) id: number,
   ) {
     const result = await this.matchService.findOne(user.userId, id);
-    const response = new BaseResponse(200, '조회 성공', result)
-    return res.status(200).json(response)
+    return new BaseResponse(200, '조회 성공', result)
   }
 
   @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number) {
-    return this.matchService.delete(id);
+  delete(
+    @User() user: JwtPayload,
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    const result = this.matchService.delete(user.userId, id);
+    return new BaseResponse(200, '삭제 성공', result)
   }
 
   @Patch(':id/counter')
   async updateCounter(
+    @User() user: JwtPayload,
     @Param('id', ParseIntPipe) matchId: number,
     @Query('type') type: 'attack_attempt_count' | 'parry_attempt_count' | 'counter_attack_attempt_count',
     @Query('delta', ParseIntPipe) delta: number,
-    @Res() res: Response,
   ) {
     if (!['attack_attempt_count', 'parry_attempt_count', 'counter_attack_attempt_count'].includes(type)) {
-      throw new BadRequestException('Invalid counter type');
+      throw new AppError('MATCH_INVALID_COUNTER_TYPE');
     }
 
-    const result = await this.matchService.updateCounter(matchId, type, delta);
-    const response = new BaseResponse(200, '변경 성공', result)
-    return res.status(200).json(response)
+    const result = await this.matchService.updateCounter(user.userId, matchId, type, delta);
+    return new BaseResponse(200, '변경 성공', result)
   }
 
 }
