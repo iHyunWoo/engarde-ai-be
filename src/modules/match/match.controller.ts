@@ -1,13 +1,9 @@
 import {
   Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
   Param,
   ParseIntPipe,
   Query,
-  Res, Patch, BadRequestException, HttpCode,
+  Patch, HttpCode,
 } from '@nestjs/common';
 import { MatchService } from './match.service';
 import { CreateMatchRequest } from './dto/create-match.request';
@@ -15,29 +11,29 @@ import { User } from '@/shared/decorators/user.decorator';
 import type { JwtPayload } from '@/modules/auth/guards/jwt-payload';
 import { Authenticated } from '@/shared/decorators/authenticated.decorator';
 import { BaseResponse } from '@/shared/dto/base-response.dto';
-import type { Response } from 'express';
 import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request';
 import { AppError } from '@/shared/error/app-error';
+import { TypedBody, TypedParam, TypedQuery, TypedRoute } from '@nestia/core';
 
 @Authenticated()
 @Controller('matches')
 export class MatchController {
   constructor(private readonly matchService: MatchService) {}
 
-  @Post()
+  @TypedRoute.Post()
   @HttpCode(201)
   async create(
     @User() user: JwtPayload,
-    @Body() dto: CreateMatchRequest,
+    @TypedBody() dto: CreateMatchRequest,
   ) {
     const result = await this.matchService.create(user.userId, dto);
     return new BaseResponse(201, '생성 성공', result);
   }
 
-  @Get()
+  @TypedRoute.Get()
   async findManyWithPagination(
     @User() user: JwtPayload,
-    @Query() query: GetMatchListRequest,
+    @TypedQuery() query: GetMatchListRequest,
   ) {
     const { limit, cursor, from, to } = query;
     const result = await this.matchService.findManyWithPagination(
@@ -50,21 +46,21 @@ export class MatchController {
     return new BaseResponse(200, '조회 성공', result);
   }
 
-  @Get(':id')
+  @TypedRoute.Get(':id')
   async findOne(
     @User() user: JwtPayload,
-    @Param('id', ParseIntPipe) id: number,
+    @TypedParam('id') id: number,
   ) {
     const result = await this.matchService.findOne(user.userId, id);
     return new BaseResponse(200, '조회 성공', result)
   }
 
-  @Delete(':id')
-  delete(
+  @TypedRoute.Delete(':id')
+  async delete(
     @User() user: JwtPayload,
-    @Param('id', ParseIntPipe) id: number
+    @TypedParam('id') id: number
   ) {
-    const result = this.matchService.delete(user.userId, id);
+    const result = await this.matchService.delete(user.userId, id);
     return new BaseResponse(200, '삭제 성공', result)
   }
 

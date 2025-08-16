@@ -54,3 +54,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /generated/prisma
 secrets/
+api-sdk/dist/
+api-sdk/lib/
+api-sdk/src/
+api-sdk/node_modules/
+api-sdk/npm-cache

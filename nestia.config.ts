@@ -1,10 +1,9 @@
 import type { INestiaConfig } from "@nestia/sdk";
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from '@/app.module';
 
 const config: INestiaConfig = {
-  output: "src/api",
-  input: () => NestFactory.create(AppModule),
+  output: "api-sdk/src",
+  input: 'src/**/*.controller.ts',
+  clone: true
 };
 
 export default config;
