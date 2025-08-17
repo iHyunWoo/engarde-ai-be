@@ -40,10 +40,11 @@ model User {
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  Match    Match[]
-  Note     Note[]
-  Marking  Marking[]
-  Opponent Opponent[]
+  Match     Match[]
+  Note      Note[]
+  Marking   Marking[]
+  Opponent  Opponent[]
+  Technique Technique[]
 }
 
 model Match {
@@ -72,15 +73,19 @@ model Match {
 }
 
 model Marking {
-  id            Int            @id @default(autoincrement())
-  match         Match          @relation(fields: [match_id], references: [id])
-  match_id      Int
-  timestamp     Float
-  result        Result
-  my_type       MarkingType
-  opponent_type MarkingType
-  quality       MarkingQuality
-  remain_time   Int
+  id        Int    @id @default(autoincrement())
+  match     Match  @relation(fields: [match_id], references: [id])
+  match_id  Int
+  timestamp Float
+  result    Result
+
+  my_techinque_id       Int
+  opponent_techinque_id Int
+  my_technique          Technique @relation("my_technique", fields: [my_techinque_id], references: [id])
+  opponent_technique    Technique @relation("opponent_technique", fields: [opponent_techinque_id], references: [id])
+
+  quality     MarkingQuality
+  remain_time Int
 
   note String
 
@@ -119,4 +124,19 @@ model Opponent {
   deleted_at DateTime?
 
   matches Match[]
+}
+
+model Technique {
+  id        Int    @id @default(autoincrement())
+  name      String
+  parent_id Int?
+
+  parent   Technique?  @relation("technique_parent", fields: [parent_id], references: [id])
+  children Technique[] @relation("technique_parent")
+
+  user    User @relation(fields: [user_id], references: [id])
+  user_id Int
+
+  marking_my_techinque       Marking[] @relation("my_technique")
+  marking_opponent_techinque Marking[] @relation("opponent_technique")
 }
