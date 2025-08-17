@@ -103,10 +103,11 @@ model Note {
   user_id Int
   user    User @relation(fields: [user_id], references: [id])
 
-  text         String   @db.Citext // 대소문자 구분 X
-  last_used_at DateTime @default(now())
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  text         String    @db.Citext // 대소문자 구분 X
+  last_used_at DateTime  @default(now())
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
 
   @@unique([user_id, text]) // 같은 유저의 동일 텍스트 중복 방지
 }
