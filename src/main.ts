@@ -1,13 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { HttpErrorFilter } from '@/shared/filters/http-exception.filter';
+import { AppErrorFilter, HttpErrorFilter } from '@/shared/filters/http-exception.filter';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
+  // 에러 필터
+  app.useGlobalFilters(new AppErrorFilter());
   app.useGlobalFilters(new HttpErrorFilter());
+
   app.enableCors({
     origin: ['http://localhost:3000', 'https://www.engarde-ai.com'],
     credentials: true,

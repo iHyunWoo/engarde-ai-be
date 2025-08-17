@@ -5,16 +5,21 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import { SignupDto } from './dto/signup.dto';
-import { LoginDto } from './dto/login.dto';
+import { LoginRequest } from './dto/login.request';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
+import { LoginResponse } from '@/modules/auth/dto/login.response';
+import { CookieJar } from '@/shared/lib/http/cookie-jar';
+import { AppError } from '@/shared/error/app-error';
+import { JwtPayload } from '@/modules/auth/guards/jwt-payload';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private cookieJar: CookieJar,
   ) {}
 
   async signup(dto: SignupDto) {
@@ -22,17 +27,17 @@ export class AuthService {
     if (user) throw new ConflictException('This email already exists.');
 
     const hashed = await bcrypt.hash(dto.password, 10);
-    const newUser = await this.prisma.user.create({
+    await this.prisma.user.create({
       data: {
         email: dto.email,
         name: dto.name,
         password_hash: hashed,
       },
     });
-    return { userId: newUser.id };
+    return;
   }
 
-  async login(dto: LoginDto, res: Response) {
+  async login(dto: LoginRequest): Promise<LoginResponse> {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user)
       throw new UnauthorizedException('The email or password is incorrect.');
@@ -41,32 +46,41 @@ export class AuthService {
     if (!valid)
       throw new UnauthorizedException('The email or password is incorrect.');
 
-    this.issueTokens(user.id, res, dto.rememberMe);
+    this.issueTokens(user.id, dto.rememberMe);
 
     return { userId: user.id, name: user.name };
   }
 
-  refresh(userId: number, res: Response) {
-    this.issueTokens(userId, res);
+  refresh(refreshToken?: string) {
+    if (!refreshToken) throw new AppError('TOKEN_MISSING')
+
+    let payload: JwtPayload;
+    try {
+      payload = this.jwtService.verify<JwtPayload>(refreshToken);
+    } catch {
+      throw new AppError('TOKEN_MISSING')
+    }
+
+    this.issueTokens(payload.userId);
 
     return;
   }
 
-  private issueTokens(userId: number, res: Response, rememberMe = false) {
+  private issueTokens(userId: number, rememberMe = false) {
     const accessToken = this.jwtService.sign({ userId }, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign({ userId }, {
         expiresIn: rememberMe ? '30d' : '1d',
       },
     );
 
-    res.cookie('access_token', accessToken, {
+    this.cookieJar.set('access_token', accessToken, {
       httpOnly: true,
       sameSite: 'none',
       secure: true,
       maxAge: 15 * 60 * 1000,
     });
 
-    res.cookie('refresh_token', refreshToken, {
+    this.cookieJar.set('refresh_token', refreshToken, {
       httpOnly: true,
       sameSite: 'none',
       secure: true,
