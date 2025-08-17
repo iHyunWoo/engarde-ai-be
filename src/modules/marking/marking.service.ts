@@ -1,11 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import { CreateMarkingRequest } from '@/modules/marking/dto/create-marking.request';
-import {
-  toMarkingList,
-  toMarkingResponse,
-} from '@/modules/marking/dto/marking.response';
 import { NoteService } from '@/modules/note/note.service';
+import { AppError } from '@/shared/error/app-error';
+import { mapToMarkingRes, mapToMarkingResList } from '@/modules/marking/mapper/marking.mapper';
 
 @Injectable()
 export class MarkingsService {
@@ -19,7 +17,7 @@ export class MarkingsService {
       where: { id: dto.matchId },
       select: { id: true },
     });
-    if (!match) throw new NotFoundException('Match not found');
+    if (!match) throw new AppError('MATCH_NOT_FOUND');
 
     const created = await this.prisma.marking.create({
       data: {
@@ -39,7 +37,7 @@ export class MarkingsService {
       this.noteService.upsert(userId, dto.note)
     }
 
-    return toMarkingResponse(created);
+    return mapToMarkingRes(created);
   }
 
   async listByMatch(matchId: number) {
@@ -47,7 +45,7 @@ export class MarkingsService {
       where: { match_id: matchId, deleted_at: null },
       orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],
     });
-    return toMarkingList(rows);
+    return mapToMarkingResList(rows);
   }
 
   async remove(id: number) {
@@ -55,13 +53,13 @@ export class MarkingsService {
       where: { id, deleted_at: null },
       select: { id: true },
     });
-    if (!exists) throw new NotFoundException('Marking not found');
+    if (!exists) throw new AppError('MARKING_NOT_FOUND');
 
     const updated = await this.prisma.marking.update({
       where: { id },
       data: { deleted_at: new Date() },
     });
 
-    return toMarkingResponse(updated);
+    return mapToMarkingRes(updated);
   }
 }

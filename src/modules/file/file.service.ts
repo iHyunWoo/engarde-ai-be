@@ -1,19 +1,13 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Storage } from '@google-cloud/storage';
 import { randomUUID } from 'crypto';
 import { PostSignedUrlResponse } from '@/modules/file/dto/post-signed-url.response';
 import { dateFolder } from '@/modules/file/lib/date-folder';
+import { sanitize } from '@/modules/file/lib/sanitize';
+import { prefixByMime } from '@/modules/file/lib/prefix-by-mime';
+import { AppError } from '@/shared/error/app-error';
+import { GetSignedUrlResponse } from '@/modules/file/dto/get-signed-url.response';
 
-function sanitize(name: string) {
-  // GCS object name에 안전하지 않은 문자 치환
-  return name.replace(/[^\w.\-]/g, '_');
-}
-function prefixByMime(contentType: string) {
-  const ct = contentType.toLowerCase();
-  if (ct.startsWith('video/')) return 'videos';
-  if (ct.startsWith('image/')) return 'images';
-  return 'files';
-}
 @Injectable()
 export class FileService {
   private storage = new Storage();
@@ -21,12 +15,15 @@ export class FileService {
   private expiresSec = 3600;
 
   // write signed url 발급
-  async issueWriteSignedUrl(filename: string, contentType: string): Promise<PostSignedUrlResponse> {
+  async issueWriteSignedUrl(
+    filename: string,
+    contentType: string
+  ): Promise<PostSignedUrlResponse> {
     if (!this.bucketName) {
-      throw new BadRequestException('GCS_BUCKET is not set');
+      throw new AppError('SERVER_ERROR');
     }
     if (!contentType) {
-      throw new BadRequestException('contentType is required');
+      throw new AppError('FILE_CONTENT_TYPE_MISSING');
     }
 
     const prefix = prefixByMime(contentType);
@@ -47,7 +44,7 @@ export class FileService {
   }
 
   // read signed url 발급
-  async issueReadSignedUrl(objectName: string) {
+  async issueReadSignedUrl(objectName: string): Promise<GetSignedUrlResponse> {
     const ttlSeconds = 24 * 60 * 60; // 24시간
     const expires = Date.now() + ttlSeconds * 1000;
     const [url] = await this.storage

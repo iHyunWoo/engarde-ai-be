@@ -1,24 +1,27 @@
-import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { FileService } from '@/modules/file/file.service';
 import { PostSignedUrlRequestDto } from '@/modules/file/dto/post-signed-url.request';
 import { BaseResponse } from '@/shared/dto/base-response.dto';
-import type { Response } from 'express';
+import { TypedBody, TypedQuery, TypedRoute } from '@nestia/core';
+import { Authenticated } from '@/shared/decorators/authenticated.decorator';
+import { GetSignedUrlQuery } from '@/modules/file/dto/get-signed-url.query';
 
+@Authenticated()
 @Controller('files')
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
-  @Post('write-signed-url')
-  async getWriteSignedUrl(@Body() dto: PostSignedUrlRequestDto, @Res() res: Response) {
+  @TypedRoute.Post('write')
+  async getWriteSignedUrl(@TypedBody() dto: PostSignedUrlRequestDto) {
     const result = await this.fileService.issueWriteSignedUrl(dto.fileName, dto.contentType);
-    const response = new BaseResponse(200, '발급 성공', result);
-    return res.status(200).json(response);
+    return new BaseResponse(200, '발급 성공', result);
   }
 
-  @Get('read-signed-url')
-  async getReadSignedUrl(@Query('object') objectName: string, @Res() res: Response) {
-    const result = await this.fileService.issueReadSignedUrl(objectName);
-    const response = new BaseResponse(200, '발급 성공', result);
-    return res.status(200).json(response);
+  @TypedRoute.Get('read')
+  async getReadSignedUrl(
+    @TypedQuery() query: GetSignedUrlQuery
+  ) {
+    const result = await this.fileService.issueReadSignedUrl(query.object);
+    return new BaseResponse(200, '발급 성공', result);
   }
 }
