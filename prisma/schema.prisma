@@ -125,9 +125,10 @@ model Opponent {
   name String
   team String
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+  last_used_at DateTime  @default(now())
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
 
   matches Match[]
 }
@@ -145,9 +146,10 @@ model Technique {
 
   type TechniqueType
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now()) @updatedAt
-  deleted_at DateTime?
+  last_used_at DateTime  @default(now())
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now()) @updatedAt
+  deleted_at   DateTime?
 
   marking_my_technique       Marking[]          @relation("my_technique")
   marking_opponent_technique Marking[]          @relation("opponent_technique")
