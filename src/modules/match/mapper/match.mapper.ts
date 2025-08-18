@@ -1,48 +1,30 @@
-import type { Match } from '@prisma/client';
 import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.response';
-import { CreateMatchRequest } from '@/modules/match/dto/create-match.request';
 import { GetMatchResponse } from '@/modules/match/dto/get-match.response';
 import { DeleteMatchResponse } from '@/modules/match/dto/delete-match.response';
-import { UpdateCounterResponse } from '@/modules/match/dto/update-counter.response';
+import { OpponentResponse } from '@/modules/opponent/dto/opponent.response';
+import { Match } from '@prisma/client';
+import { TechniqueAttemptResponse } from '@/modules/technique-attempt/dto/technique-attempt.response';
 
 
-export const mapToGetMatchListRes = (m: Match): GetMatchListResponse => ({
+export const mapToGetMatchListRes = (m: MatchMapperInput): GetMatchListResponse => ({
   id: m.id,
   tournamentName: m.tournament_name,
-  opponentName: m.opponent_name,
-  opponentTeam: m.opponent_team,
+  opponent: m.opponent ?? undefined,
   myScore: m.my_score,
   opponentScore: m.opponent_score,
   tournamentDate: m.tournament_date,
 });
 
-export const mapToGetMatchRes = (m: Match): GetMatchResponse => ({
+export const mapToGetMatchRes = (m: MatchMapperInput): GetMatchResponse => ({
   id: m.id,
   objectName: m.object_name,
   tournamentName: m.tournament_name,
   tournamentDate: m.tournament_date.toISOString(),
-  opponentName: m.opponent_name,
-  opponentTeam: m.opponent_team,
+  opponent: m.opponent ?? undefined,
   myScore: m.my_score,
   opponentScore: m.opponent_score,
-  attackAttemptCount: m.attack_attempt_count,
-  parryAttemptCount: m.parry_attempt_count,
-  counterAttackAttemptCount: m.counter_attack_attempt_count,
+  techniqueAttempt: m.techniqueAttempt ?? [],
   createdAt: m.created_at.toISOString(),
-});
-
-export const mapCreateReqToMatch = (userId: number, dto: CreateMatchRequest) => ({
-  user_id: userId,
-  object_name: dto.objectName ?? null,
-  tournament_name: dto.tournamentName,
-  tournament_date: new Date(dto.tournamentDate),
-  opponent_name: dto.opponentName,
-  opponent_team: dto.opponentTeam ?? null,
-  my_score: dto.myScore,
-  opponent_score: dto.opponentScore,
-  attack_attempt_count: 0,
-  parry_attempt_count: 0,
-  counter_attack_attempt_count: 0,
 });
 
 export const mapToDeleteRes = (m: Match): DeleteMatchResponse => ({
@@ -50,10 +32,17 @@ export const mapToDeleteRes = (m: Match): DeleteMatchResponse => ({
   deletedAt: m.deleted_at?.toISOString() ?? "",
 });
 
-export const mapToUpdateCounterRes = (m: Match): UpdateCounterResponse => ({
-  id: m.id,
-  attackAttemptCount: m.attack_attempt_count,
-  parryAttemptCount: m.parry_attempt_count,
-  counterAttackAttemptCount: m.counter_attack_attempt_count,
-  updatedAt: m.updated_at,
-});
+interface MatchMapperInput {
+  id: number
+  object_name: string
+  tournament_name: string
+  tournament_date: Date
+  opponent?: OpponentResponse | undefined
+  my_score: number
+  opponent_score: number
+  user_id: number
+  techniqueAttempt?: TechniqueAttemptResponse[]
+  created_at: Date
+  updated_at: Date
+  deleted_at: Date | null
+}

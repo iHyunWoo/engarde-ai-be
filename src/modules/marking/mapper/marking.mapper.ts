@@ -1,19 +1,35 @@
-import { Marking } from '@prisma/client';
+import {
+  MarkingQuality,
+  Result as MarkingResult,
+} from '@prisma/client';
 import { MarkingResponse } from '@/modules/marking/dto/marking.response';
+import { TechniqueResponse } from '@/modules/technique/dto/technique.response';
 
-export function mapToMarkingRes(row: Marking): MarkingResponse {
+export function mapToMarkingRes(row: MarkingMapperInput): MarkingResponse {
   return {
     id: row.id,
     timestamp: row.timestamp,
     result: row.result,
-    myType: row.my_type,
-    opponentType: row.opponent_type,
+    myTechnique: row.my_technique,
+    opponentTechnique: row.opponent_technique,
     quality: row.quality,
     note: row.note,
     remainTime: row.remain_time,
   };
 }
 
-export function mapToMarkingResList(rows: Marking[]): MarkingResponse[] {
+export function mapToMarkingResList(rows: MarkingMapperInput[]): MarkingResponse[] {
   return rows.map(mapToMarkingRes);
+}
+
+interface MarkingMapperInput{
+  id: number
+  match_id: number
+  timestamp: number
+  result: MarkingResult
+  my_technique: TechniqueResponse
+  opponent_technique: TechniqueResponse
+  quality: MarkingQuality
+  remain_time: number
+  note: string
 }

@@ -19,18 +19,51 @@ export class MarkingsService {
     });
     if (!match) throw new AppError('MATCH_NOT_FOUND');
 
+    const [myTechnique, opponentTechnique] = await Promise.all([
+      this.prisma.technique.findFirst({
+        where: {
+          user_id: userId,
+          name: dto.myType,
+          deleted_at: null
+        }
+      }),
+      this.prisma.technique.findFirst({
+        where: {
+          user_id: userId,
+          name: dto.opponentType,
+          deleted_at: null
+        }
+      })
+    ])
+
+    if (!myTechnique || !opponentTechnique) throw new AppError('TECHNIQUE_NOT_FOUND')
+
     const created = await this.prisma.marking.create({
       data: {
         match_id: dto.matchId,
         timestamp: dto.timestamp,
         result: dto.result,
-        my_type: dto.myType,
-        opponent_type: dto.opponentType,
+        my_technique_id: myTechnique.id,
+        opponent_technique_id: opponentTechnique.id,
         quality: dto.quality,
         note: dto.note,
         remain_time: dto.remainTime,
         user_id: userId
       },
+      include: {
+        my_technique: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        opponent_technique: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
     });
     
     if (dto.note?.trim()) {
@@ -44,6 +77,20 @@ export class MarkingsService {
     const rows = await this.prisma.marking.findMany({
       where: { match_id: matchId, deleted_at: null },
       orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],
+      include: {
+        my_technique: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        opponent_technique: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
     });
     return mapToMarkingResList(rows);
   }
@@ -58,6 +105,20 @@ export class MarkingsService {
     const updated = await this.prisma.marking.update({
       where: { id },
       data: { deleted_at: new Date() },
+      include: {
+        my_technique: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        opponent_technique: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
     });
 
     return mapToMarkingRes(updated);
