@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import {
-  LossCountStatisticsResponse,
+  LossCountStatisticsResponse, TopNotesDTO,
   WinRateByTechniqueDto,
   WinRateStatisticsResponse,
 } from '@/modules/statistic/dto/get-statistic.response';
@@ -147,7 +147,7 @@ export class StatisticService {
       take: take
     });
 
-    const topNotes: Record<number, string[]> = {};
+    const topNotes: Record<number, TopNotesDTO[]> = {};
 
     for (const row of rows) {
       const { my_technique_id, note } = row;
@@ -157,7 +157,7 @@ export class StatisticService {
         topNotes[my_technique_id] = [];
       }
 
-      topNotes[my_technique_id].push(note);
+      topNotes[my_technique_id].push({ note, count: row._count });
     }
 
     return topNotes;
