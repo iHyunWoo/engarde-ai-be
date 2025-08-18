@@ -14,20 +14,26 @@ enum Result {
   attempt
 }
 
-enum MarkingType {
-  none
-  lunge
-  advanced_lunge
-  fleche
-  push
-  parry
-  counter_attack
-}
+// enum MarkingType {
+//   none
+//   lunge
+//   advanced_lunge
+//   fleche
+//   push
+//   parry
+//   counter_attack
+// }
 
 enum MarkingQuality {
   good
   bad
   lucky
+}
+
+enum TechniqueType {
+  attack
+  defense
+  etc
 }
 
 model User {
@@ -40,11 +46,12 @@ model User {
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  Match     Match[]
-  Note      Note[]
-  Marking   Marking[]
-  Opponent  Opponent[]
-  Technique Technique[]
+  Match            Match[]
+  Note             Note[]
+  Marking          Marking[]
+  opponent         Opponent[]
+  Technique        Technique[]
+  TechniqueAttempt TechniqueAttempt[]
 }
 
 model Match {
@@ -53,14 +60,11 @@ model Match {
   tournament_name String
   tournament_date DateTime
 
-  Opponent    Opponent? @relation(fields: [opponent_id], references: [id])
-  opponent_id Int?
+  opponent    Opponent @relation(fields: [opponent_id], references: [id])
+  opponent_id Int
 
-  my_score                     Int
-  opponent_score               Int
-  attack_attempt_count         Int
-  parry_attempt_count          Int
-  counter_attack_attempt_count Int
+  my_score       Int
+  opponent_score Int
 
   user    User @relation(fields: [user_id], references: [id])
   user_id Int
@@ -69,7 +73,8 @@ model Match {
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  Marking Marking[]
+  Marking          Marking[]
+  TechniqueAttempt TechniqueAttempt[]
 }
 
 model Marking {
@@ -79,10 +84,10 @@ model Marking {
   timestamp Float
   result    Result
 
-  my_techinque_id       Int
-  opponent_techinque_id Int
-  my_technique          Technique @relation("my_technique", fields: [my_techinque_id], references: [id])
-  opponent_technique    Technique @relation("opponent_technique", fields: [opponent_techinque_id], references: [id])
+  my_technique_id       Int
+  opponent_technique_id Int
+  my_technique          Technique @relation("my_technique", fields: [my_technique_id], references: [id])
+  opponent_technique    Technique @relation("opponent_technique", fields: [opponent_technique_id], references: [id])
 
   quality     MarkingQuality
   remain_time Int
@@ -138,6 +143,31 @@ model Technique {
   user    User @relation(fields: [user_id], references: [id])
   user_id Int
 
-  marking_my_techinque       Marking[] @relation("my_technique")
-  marking_opponent_techinque Marking[] @relation("opponent_technique")
+  type TechniqueType
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  deleted_at DateTime?
+
+  marking_my_technique       Marking[]          @relation("my_technique")
+  marking_opponent_technique Marking[]          @relation("opponent_technique")
+  TechniqueAttempt           TechniqueAttempt[]
+}
+
+model TechniqueAttempt {
+  id      Int  @id @default(autoincrement())
+  user    User @relation(fields: [user_id], references: [id])
+  user_id Int
+
+  technique    Technique @relation(fields: [technique_id], references: [id])
+  technique_id Int
+
+  match    Match? @relation(fields: [match_id], references: [id])
+  match_id Int?
+
+  attemptCount Int
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deleted_at DateTime?
 }

@@ -8,9 +8,7 @@ import type { JwtPayload } from '@/modules/auth/guards/jwt-payload';
 import { Authenticated } from '@/shared/decorators/authenticated.decorator';
 import { BaseResponse } from '@/shared/dto/base-response.dto';
 import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request';
-import { AppError } from '@/shared/error/app-error';
 import { TypedBody, TypedParam, TypedQuery, TypedRoute } from '@nestia/core';
-import { UpdateCounterQuery } from '@/modules/match/dto/update-counter.query';
 
 @Authenticated()
 @Controller('matches')
@@ -68,19 +66,4 @@ export class MatchController {
     await this.matchService.delete(user.userId, id);
     return  new BaseResponse(200, '삭제 성공');
   }
-
-  @TypedRoute.Patch(':id/counter')
-  async updateCounter(
-    @User() user: JwtPayload,
-    @TypedParam('id') matchId: number,
-    @TypedQuery() query: UpdateCounterQuery
-  ) {
-    if (!['attack_attempt_count', 'parry_attempt_count', 'counter_attack_attempt_count'].includes(query.type)) {
-      throw new AppError('MATCH_INVALID_COUNTER_TYPE');
-    }
-
-    const result = await this.matchService.updateCounter(user.userId, matchId, query);
-    return new BaseResponse(200, '변경 성공', result)
-  }
-
 }

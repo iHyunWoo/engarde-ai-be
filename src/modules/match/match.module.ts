@@ -7,5 +7,6 @@ import { AuthModule } from '@/modules/auth/auth.module';
   imports: [AuthModule],
   controllers: [MatchController],
   providers: [MatchService],
+  exports: [MatchService]
 })
 export class MatchModule {}

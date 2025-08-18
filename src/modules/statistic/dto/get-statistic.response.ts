@@ -1,41 +1,21 @@
-class TopNoteDto {
-  note: string;
+export interface WinRateByTechniqueDto {
+  name: string;
+  attemptCount: number;
+  winCount: number;
+  topNotes: string[];
+}
+
+export interface LossCountByTechniqueDto {
+  name: string;
   count: number;
+  topNotes: string[];
 }
 
-class AttemptDto {
-  attackAttemptCount: number;
-  parryAttemptCount: number;
-  counterAttackAttemptCount: number;
-  attackWinCount: number;
-  parryWinCount: number;
-  counterAttackWinCount: number;
-  topNotesByType?: {
-    attack: TopNoteDto[];
-    parry: TopNoteDto[];
-    counterAttack: TopNoteDto[];
-  };
-}
-
-class LoseDto {
-  lungeLoseCount: number;
-  advancedLungeLoseCount: number;
-  flecheLoseCount: number;
-  pushLoseCount: number;
-  parryLoseCount: number;
-  counterAttackLoseCount: number;
-  topNotesByType?: {
-    lunge: TopNoteDto[];
-    advancedLunge: TopNoteDto[];
-    fleche: TopNoteDto[];
-    push: TopNoteDto[];
-    parry: TopNoteDto[];
-    counter: TopNoteDto[];
-  }
-}
+export type WinRateStatisticsResponse = Record<number, WinRateByTechniqueDto>;
+export type LossCountStatisticsResponse = Record<number, LossCountByTechniqueDto>;
 
 export class GetStatisticResponse {
   matchCount: number;
-  attempt?: AttemptDto;
-  lose?: LoseDto;
+  winRate?: WinRateStatisticsResponse;
+  lossCount?: LossCountStatisticsResponse;
 }

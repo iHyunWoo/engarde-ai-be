@@ -2,7 +2,6 @@ import { IsInt, IsEnum, IsString, MaxLength, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 import {
   Result as MarkingResult,
-  MarkingType as MarkingType,
   MarkingQuality as MarkingQuality,
 } from '@prisma/client'
 
@@ -19,11 +18,11 @@ export class CreateMarkingRequest {
   @IsEnum(MarkingResult)
   result!: MarkingResult;
 
-  @IsEnum(MarkingType)
-  myType!: MarkingType;
+  @IsString()
+  myType!: string;
 
-  @IsEnum(MarkingType)
-  opponentType!: MarkingType;
+  @IsString()
+  opponentType!: string;
 
   @IsEnum(MarkingQuality)
   quality!: MarkingQuality;

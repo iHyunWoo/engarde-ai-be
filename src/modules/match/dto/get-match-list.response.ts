@@ -1,8 +1,9 @@
+import { OpponentResponse } from '@/modules/opponent/dto/opponent.response';
+
 export class GetMatchListResponse {
   id: number;
   tournamentName: string;
-  opponentName: string;
-  opponentTeam: string;
+  opponent: OpponentResponse | undefined;
   myScore: number;
   opponentScore: number;
   tournamentDate: Date;

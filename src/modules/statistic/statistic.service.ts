@@ -1,205 +1,165 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import {
-  GetStatisticRequest,
-  StatsScope,
-} from '@/modules/statistic/dto/get-statistic.request';
-import { GetStatisticResponse } from '@/modules/statistic/dto/get-statistic.response';
-import { MarkingType, Result as MarkingResult } from '@prisma/client';
-import { toTopNotes } from '@/modules/statistic/lib/to-top-notes';
+  LossCountStatisticsResponse,
+  WinRateByTechniqueDto,
+  WinRateStatisticsResponse,
+} from '@/modules/statistic/dto/get-statistic.response';
 
 @Injectable()
 export class StatisticService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getStatistics(userId: number, query: GetStatisticRequest) {
-    const { from: fromString, to: toString, scope } = query;
-    const from = new Date(fromString);
-    const to = new Date(toString);
-
-    // scope에 해당하는 경기 가져오기
-    const matchWhere = {
-      user_id: userId,
-      tournament_date: { gte: from, lte: to },
-      deleted_at: null,
-    };
-
-    const matches = await this.prisma.match.findMany({
-      select: { id: true },
-      where: matchWhere,
-    });
-    const matchIds = matches.map((match) => match.id);
-
-    const res: GetStatisticResponse = {
-      matchCount: matches.length
-    };
-
-    // ATTEMPT
-    if (scope === StatsScope.ALL || scope === StatsScope.ATTEMPT) {
-      // 시도 합계
-      const agg = await this.prisma.match.aggregate({
-        where: matchWhere,
-        _sum: {
-          attack_attempt_count: true,
-          parry_attempt_count: true,
-          counter_attack_attempt_count: true,
-        },
-      });
-
-      // win 마킹 수
-      const winByType = await this.prisma.marking.groupBy({
-        by: ['my_type'],
-        where: {
-          user_id: userId,
-          match_id: { in: matchIds },
-          result: 'win',
-          deleted_at: null,
-        },
-        _count: { _all: true },
-      });
-
-      // 승리 수 계산
-      const winCountByType = (type: MarkingType) => {
-        return (
-          winByType.find((marking) => marking.my_type === type)?._count._all ??
-          0
-        );
-      };
-
-      const attackWinCount =
-        winCountByType('lunge') +
-        winCountByType('advanced_lunge') +
-        winCountByType('fleche') +
-        winCountByType('push');
-      const parryWinCount = winCountByType('parry');
-      const counterAttackWinCount = winCountByType('counter_attack');
-
-      // 각 타입 별 상위 노트 가져오기
-      const attemptNotes = await this.getAttemptTopNotes(userId, matchIds);
-
-      res.attempt = {
-        attackAttemptCount: agg._sum.attack_attempt_count ?? 0,
-        parryAttemptCount: agg._sum.parry_attempt_count ?? 0,
-        counterAttackAttemptCount: agg._sum.counter_attack_attempt_count ?? 0,
-        attackWinCount,
-        parryWinCount,
-        counterAttackWinCount,
-        topNotesByType: attemptNotes,
-      };
-    }
-
-    // LOSE
-    if (scope === StatsScope.ALL || scope === StatsScope.LOSE) {
-      const loseByType = await this.prisma.marking.groupBy({
-        by: ['opponent_type'],
-        where: {
-          user_id: userId,
-          match_id: { in: matchIds },
-          result: 'lose',
-          deleted_at: null,
-        },
-        _count: { opponent_type: true },
-      });
-
-      // 패배 수 계산
-      const loseCountByType = (type: MarkingType) => {
-        return (
-          loseByType.find((marking) => marking.opponent_type === type)?._count
-            .opponent_type ?? 0
-        );
-      };
-
-      // 각 타입 별 상위 노트 가져오기
-      const loseNotes = await this.getLoseTopNotes(userId, matchIds);
-
-      res.lose = {
-        lungeLoseCount: loseCountByType('lunge'),
-        advancedLungeLoseCount: loseCountByType('advanced_lunge'),
-        flecheLoseCount: loseCountByType('fleche'),
-        pushLoseCount: loseCountByType('push'),
-        parryLoseCount: loseCountByType('parry'),
-        counterAttackLoseCount: loseCountByType('counter_attack'),
-        topNotesByType: loseNotes,
-      };
-    }
-
-    return res;
-  }
-
-  // Attack Total/Parry/Counter Attack 별 승리 한 경우 Top3 노트 가져오기
-  private async getAttemptTopNotes(userId: number, matchIds: number[]) {
-    if (!matchIds.length) {
-      return { attack: [], parry: [], counterAttack: [] };
-    }
-
-    const [attackRaw, parryRaw, counterRaw] = await Promise.all([
-      this.groupTopNotes(userId, matchIds, 'win', {
-        in: ['lunge', 'advanced_lunge', 'fleche', 'push'],
-      }),
-      this.groupTopNotes(userId, matchIds, 'win', 'parry'),
-      this.groupTopNotes(userId, matchIds, 'win', 'counter_attack'),
-    ]);
-
-    return {
-      attack: toTopNotes(attackRaw),
-      parry: toTopNotes(parryRaw),
-      counterAttack: toTopNotes(counterRaw),
-    };
-  }
-
-  // 각 패벼 타입 별 Top3 노트 가져오기
-  private async getLoseTopNotes(userId: number, matchIds: number[]) {
-    if (!matchIds.length) {
-      return {
-        lunge: [],
-        advancedLunge: [],
-        fleche: [],
-        push: [],
-        parry: [],
-        counter: [],
-      };
-    }
-
-    const [lungeRaw, advRaw, flecheRaw, pushRaw, parryRaw, counterRaw] =
-      await Promise.all([
-        this.groupTopNotes(userId, matchIds, 'lose', 'lunge'),
-        this.groupTopNotes(userId, matchIds, 'lose', 'advanced_lunge'),
-        this.groupTopNotes(userId, matchIds, 'lose', 'fleche'),
-        this.groupTopNotes(userId, matchIds, 'lose', 'push'),
-        this.groupTopNotes(userId, matchIds, 'lose', 'parry'),
-        this.groupTopNotes(userId, matchIds, 'lose', 'counter_attack'),
-      ]);
-
-    return {
-      lunge: toTopNotes(lungeRaw),
-      advancedLunge: toTopNotes(advRaw),
-      fleche: toTopNotes(flecheRaw),
-      push: toTopNotes(pushRaw),
-      parry: toTopNotes(parryRaw),
-      counter: toTopNotes(counterRaw),
-    };
-  }
-
-  // 각 타입 별 Note를 가져오기 위한 groupBy 공통 함수
-  private groupTopNotes(
-    userId: number,
-    matchIds: number[],
-    result: MarkingResult,
-    myType: MarkingType | { in: MarkingType[] },
-  ) {
-    return this.prisma.marking.groupBy({
-      by: ['note'],
+  // 각 기술 별 성공률
+  async getWinRateByTechnique(userId: number, matchIds: number[]): Promise<WinRateStatisticsResponse> {
+    // 각 기술 별 시도 횟수
+    const attempts = await this.prisma.techniqueAttempt.findMany({
       where: {
         user_id: userId,
         match_id: { in: matchIds },
-        result,
         deleted_at: null,
-        note: { not: '' },
-        my_type: myType,
       },
-      _count: { note: true },
-      orderBy: { _count: { note: 'desc' } },
-      take: 3,
+      include: {
+        technique: true,
+      },
     });
+
+    // Marking 테이블에서 각 기술 별 성공 횟수를 가져옴
+    const winMarkings = await this.prisma.marking.findMany({
+      where: {
+        user_id: userId,
+        match_id: { in: matchIds },
+        result: 'win',
+        deleted_at: null,
+      },
+      include: {
+        my_technique: true,
+      },
+    });
+
+    const statsMap = new Map<number, WinRateByTechniqueDto>();
+    // 기술 별 시도 횟수 집계
+    for (const attempt of attempts) {
+      const { id, name } = attempt.technique;
+      const existing: WinRateByTechniqueDto = statsMap.get(id) ?? {
+        name,
+        attemptCount: 0,
+        winCount: 0,
+        topNotes: [],
+      };
+      existing.attemptCount += attempt.attemptCount;
+      statsMap.set(id, existing);
+    }
+
+    // 기술 별 성공 횟수 집계
+    for (const marking of winMarkings) {
+      const technique = marking.my_technique;
+      if (!technique) continue;
+
+      const { id, name } = technique;
+      const existing: WinRateByTechniqueDto = statsMap.get(id) ?? {
+        name,
+        attemptCount: 0,
+        winCount: 0,
+        topNotes: [],
+      };
+      existing.winCount += 1;
+      statsMap.set(id, existing);
+    }
+
+    const topNotesMap = await this.getTopNotesByTechnique(userId, matchIds)
+
+    // 결과 변환
+    const result: WinRateStatisticsResponse = {};
+    for (const [id, data] of statsMap.entries()) {
+      result[id] = {
+        name: data.name,
+        attemptCount: data.attemptCount,
+        winCount: data.winCount,
+        topNotes: topNotesMap[id] ?? [],
+      };
+    }
+
+    return result;
+  }
+
+
+
+  async getLossTypes(userId: number, matchIds: number[]): Promise<LossCountStatisticsResponse> {
+    // Loss 마킹 중 상대방 기술 가져오기
+    const lossMarkings = await this.prisma.marking.findMany({
+      where: {
+        user_id: userId,
+        match_id: { in: matchIds },
+        result: 'lose',
+        deleted_at: null,
+      },
+      include: {
+        opponent_technique: true,
+      },
+    });
+
+    const statsMap = new Map<number, { name: string; count: number }>();
+
+    // 기술별 횟수 집계
+    for (const marking of lossMarkings) {
+      const technique = marking.opponent_technique;
+      if (!technique) continue;
+
+      const { id, name } = technique;
+      const existing = statsMap.get(id) ?? { name, count: 0 };
+      existing.count += 1;
+      statsMap.set(id, existing);
+    }
+
+    // 기술별 상위 노트
+    const topNotes = await this.getTopNotesByTechnique(userId, matchIds);
+
+
+    const result: LossCountStatisticsResponse = {};
+    for (const [id, data] of statsMap.entries()) {
+      result[id] = {
+        name: data.name,
+        count: data.count,
+        topNotes: topNotes[id] ?? [],
+      };
+    }
+
+    return result;
+  }
+
+
+  // 기술 별 해당 마킹의 Note 중 상위 빈도 note 가져오기
+  private async getTopNotesByTechnique(userId: number, matchIds: number[], take: number = 3) {
+    const rows = await this.prisma.marking.groupBy({
+      by: ['my_technique_id', 'note'],
+      where: {
+        user_id: userId,
+        match_id: { in: matchIds },
+        result: 'win',
+        note: { not: '' },
+        deleted_at: null,
+      },
+      _count: true,
+      orderBy: {
+        _count: { note: 'desc' },
+      },
+      take: take
+    });
+
+    const topNotes: Record<number, string[]> = {};
+
+    for (const row of rows) {
+      const { my_technique_id, note } = row;
+      if (!note?.trim()) continue;
+
+      if (!topNotes[my_technique_id]) {
+        topNotes[my_technique_id] = [];
+      }
+
+      topNotes[my_technique_id].push(note);
+    }
+
+    return topNotes;
   }
 }
