@@ -32,10 +32,11 @@ export class TechniqueService {
   ): Promise<CursorResponse<TechniqueResponse>> {
     const take = limit ?? 10;
 
-    const matches = await this.prisma.technique.findMany({
+    const techniques = await this.prisma.technique.findMany({
       where: {
         user_id: userId,
         deleted_at: null,
+        parent_id: null,
       },
       orderBy: { id: 'desc' },
       take: take + 1,
@@ -52,8 +53,8 @@ export class TechniqueService {
       }
     });
 
-    const hasNextPage = matches.length > take;
-    const trimmed = hasNextPage ? matches.slice(0, -1) : matches;
+    const hasNextPage = techniques.length > take;
+    const trimmed = hasNextPage ? techniques.slice(0, -1) : techniques;
 
     return {
       items: trimmed,
