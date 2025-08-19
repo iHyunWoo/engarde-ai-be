@@ -43,10 +43,6 @@ export class TechniqueService {
         skip: 1,
         cursor: { id: cursor },
       }),
-      select: {
-        id: true,
-        name: true,
-      }
     });
 
     const hasNextPage = matches.length > take;

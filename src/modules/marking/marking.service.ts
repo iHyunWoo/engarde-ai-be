@@ -4,12 +4,14 @@ import { CreateMarkingRequest } from '@/modules/marking/dto/create-marking.reque
 import { NoteService } from '@/modules/note/note.service';
 import { AppError } from '@/shared/error/app-error';
 import { mapToMarkingRes, mapToMarkingResList } from '@/modules/marking/mapper/marking.mapper';
+import { TechniqueService } from '@/modules/technique/technique.service';
 
 @Injectable()
 export class MarkingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly noteService: NoteService,
+    private readonly techniqueService: TechniqueService,
   ) {}
 
   async create(userId: number, dto: CreateMarkingRequest) {
@@ -51,20 +53,13 @@ export class MarkingsService {
         user_id: userId
       },
       include: {
-        my_technique: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        opponent_technique: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+        my_technique: true,
+        opponent_technique: true
       }
     });
+
+    await this.techniqueService.useTechnique(myTechnique.id)
+    await this.techniqueService.useTechnique(opponentTechnique.id)
     
     if (dto.note?.trim()) {
       this.noteService.upsert(userId, dto.note)
@@ -78,18 +73,8 @@ export class MarkingsService {
       where: { match_id: matchId, deleted_at: null },
       orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],
       include: {
-        my_technique: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        opponent_technique: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+        my_technique: true,
+        opponent_technique: true
       }
     });
     return mapToMarkingResList(rows);
@@ -106,18 +91,8 @@ export class MarkingsService {
       where: { id },
       data: { deleted_at: new Date() },
       include: {
-        my_technique: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        opponent_technique: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+        my_technique: true,
+        opponent_technique: true,
       }
     });
 
