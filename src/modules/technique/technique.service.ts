@@ -43,6 +43,13 @@ export class TechniqueService {
         skip: 1,
         cursor: { id: cursor },
       }),
+      include: {
+        children: {
+          where: {
+            deleted_at: null
+          }
+        }
+      }
     });
 
     const hasNextPage = matches.length > take;
