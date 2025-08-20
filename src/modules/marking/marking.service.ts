@@ -25,14 +25,14 @@ export class MarkingsService {
       this.prisma.technique.findFirst({
         where: {
           user_id: userId,
-          name: dto.myType,
+          id: dto.myTechnique.id,
           deleted_at: null
         }
       }),
       this.prisma.technique.findFirst({
         where: {
           user_id: userId,
-          name: dto.opponentType,
+          id: dto.opponentTechnique.id,
           deleted_at: null
         }
       })

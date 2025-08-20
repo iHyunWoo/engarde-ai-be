@@ -36,6 +36,14 @@ export class TechniqueController {
     return new BaseResponse(200, '조회 성공', result)
   }
 
+  @TypedRoute.Get('/all')
+  async findAll(
+    @User() user: JwtPayload
+  ): Promise<BaseResponse<TechniqueResponse[]>> {
+    const result = await this.techniqueService.findAll(user.userId)
+    return new BaseResponse(200, '조회 성공', result)
+  }
+
   @TypedRoute.Put(':id')
   async update(
     @User() user: JwtPayload,
