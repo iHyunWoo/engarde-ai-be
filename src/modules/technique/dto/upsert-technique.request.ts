@@ -1,8 +1,7 @@
 import { TechniqueType } from '@prisma/client';
 
-export class TechniqueResponse {
-  id: number;
+export class UpsertTechniqueRequest {
   name: string;
   type: TechniqueType;
-  children?: TechniqueResponse[]
+  parentId?: number | undefined;
 }

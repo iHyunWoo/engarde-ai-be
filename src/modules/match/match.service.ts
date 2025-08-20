@@ -12,18 +12,21 @@ import { CursorResponse } from '@/shared/dto/cursor-response';
 import { DeleteMatchResponse } from '@/modules/match/dto/delete-match.response';
 import { GetMatchResponse } from '@/modules/match/dto/get-match.response';
 import { AppError } from '@/shared/error/app-error';
-import { Opponent } from '@prisma/client';
+import { OpponentService } from '@/modules/opponent/opponent.service';
 
 @Injectable()
 export class MatchService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly opponentService: OpponentService
+  ) {}
 
   async create(
     userId: number,
     dto: CreateMatchRequest,
   ): Promise<CreateMatchResponseDto> {
     // 상대를 찾고 없다면 생성
-    const opponent = await this.findOrCreateOpponent(
+    const opponent = await this.opponentService.findOrCreate(
       userId,
       dto.opponentName,
       dto.opponentTeam
@@ -40,33 +43,10 @@ export class MatchService {
         opponent_score: dto.opponentScore,
       },
     });
+
+    await this.opponentService.useOpponent(opponent.id)
+
     return { id: match.id };
-  }
-
-  // Opponent를 찾고, 없다면 생성
-  private async findOrCreateOpponent(
-    userId: number,
-    name: string,
-    team: string,
-  ): Promise<Opponent> {
-    const existing = await this.prisma.opponent.findFirst({
-      where: {
-        user_id: userId,
-        name,
-        team,
-        deleted_at: null,
-      },
-    });
-
-    if (existing) return existing;
-
-    return this.prisma.opponent.create({
-      data: {
-        user_id: userId,
-        name,
-        team,
-      },
-    });
   }
 
   async update(
@@ -82,7 +62,7 @@ export class MatchService {
     if (match.deleted_at) throw new AppError('MATCH_GONE');
 
     // 상대를 찾고 없다면 생성
-    const opponent = await this.findOrCreateOpponent(
+    const opponent = await this.opponentService.findOrCreate(
       userId,
       dto.opponentName,
       dto.opponentTeam
@@ -103,6 +83,8 @@ export class MatchService {
         opponent_score: dto.opponentScore,
       },
     });
+
+    await this.opponentService.useOpponent(opponent.id)
 
     return {
       id: updated.id,

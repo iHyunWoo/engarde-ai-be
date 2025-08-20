@@ -19,7 +19,6 @@ export class NoteService {
   }
 
   async suggest(userId: number, query: string, limit = 5): Promise<string[]> {
-    console.log(query);
     const keyword = query.trim();
     if (keyword.length < 2) return [];
 
