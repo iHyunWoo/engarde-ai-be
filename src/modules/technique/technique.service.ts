@@ -25,6 +25,26 @@ export class TechniqueService {
     })
   }
 
+
+  async findAll(
+    userId: number,
+  ): Promise<TechniqueResponse[]> {
+    return await this.prisma.technique.findMany({
+      where: {
+        user_id: userId,
+        deleted_at: null,
+        parent_id: null,
+      },
+      include: {
+        children: {
+          where: {
+            deleted_at: null
+          }
+        }
+      }
+    })
+  }
+
   async findAllByPagination(
     userId: number,
     limit: number,

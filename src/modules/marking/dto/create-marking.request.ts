@@ -3,7 +3,8 @@ import { Transform } from 'class-transformer';
 import {
   Result as MarkingResult,
   MarkingQuality as MarkingQuality,
-} from '@prisma/client'
+} from '@prisma/client';
+import { TechniqueResponse } from '@/modules/technique/dto/technique.response';
 
 
 export class CreateMarkingRequest {
@@ -17,12 +18,10 @@ export class CreateMarkingRequest {
 
   @IsEnum(MarkingResult)
   result!: MarkingResult;
+  
+  myTechnique!: TechniqueResponse;
 
-  @IsString()
-  myType!: string;
-
-  @IsString()
-  opponentType!: string;
+  opponentTechnique!: TechniqueResponse;
 
   @IsEnum(MarkingQuality)
   quality!: MarkingQuality;
