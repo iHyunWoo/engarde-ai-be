@@ -10,6 +10,8 @@ export class TechniqueService {
   constructor(private readonly prisma: PrismaService) {
   }
 
+  TECHNIQUE_MAX_COUNT = 30;
+
   async suggest(userId: number, query: string): Promise<TechniqueResponse[]> {
     return this.prisma.technique.findMany({
       take: 5,
@@ -93,6 +95,18 @@ export class TechniqueService {
 
     if (!technique) throw new AppError('TECHNIQUE_NOT_FOUND')
 
+    const isDuplicate = await this.prisma.technique.findFirst({
+      where: {
+        user_id: userId,
+        deleted_at: null,
+        name: dto.name,
+        type: dto.type,
+        NOT: { id: techniqueId },
+      }
+    });
+
+    if (isDuplicate) throw new AppError('TECHNIQUE_DUPLICATE');
+
     return await this.prisma.technique.update({
       where: {
         id: techniqueId
@@ -138,6 +152,25 @@ export class TechniqueService {
   }
 
   async create(userId: number, dto: UpsertTechniqueRequest): Promise<TechniqueResponse> {
+    const techniqueCount = await this.prisma.technique.count({
+      where: {
+        user_id: userId,
+        deleted_at: null
+      }
+    })
+
+    const isDuplicate = await this.prisma.technique.findFirst({
+      where: {
+        user_id: userId,
+        deleted_at: null,
+        name: dto.name,
+        type: dto.type,
+      }
+    });
+
+    if (isDuplicate) throw new AppError('TECHNIQUE_DUPLICATE');
+
+    if (techniqueCount >= this.TECHNIQUE_MAX_COUNT) throw new AppError('TECHNIQUE_MAX')
     return await this.prisma.technique.create({
       data: {
         user_id: userId,
