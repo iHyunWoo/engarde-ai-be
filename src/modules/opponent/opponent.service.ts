@@ -81,7 +81,7 @@ export class OpponentService {
       },
       data: {
         name: dto.name,
-        team: dto.name,
+        team: dto.team,
         last_used_at: new Date()
       }
     })
