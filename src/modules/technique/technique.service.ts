@@ -4,6 +4,7 @@ import { TechniqueResponse } from '@/modules/technique/dto/technique.response';
 import { CursorResponse } from '@/shared/dto/cursor-response';
 import { UpsertTechniqueRequest } from '@/modules/technique/dto/upsert-technique.request';
 import { AppError } from '@/shared/error/app-error';
+import { DEFAULT_TECHNIQUES } from '@/modules/technique/lib/default-techniques';
 
 @Injectable()
 export class TechniqueService {
@@ -181,5 +182,14 @@ export class TechniqueService {
     })
   }
 
+  async setDefaultTechnique(userId: number) {
+    await this.prisma.technique.createMany({
+      data: DEFAULT_TECHNIQUES.map((technique) => ({
+        ...technique,
+        user_id: userId,
+        parent_id: null
+      })),
+    });
+  }
 
 }
