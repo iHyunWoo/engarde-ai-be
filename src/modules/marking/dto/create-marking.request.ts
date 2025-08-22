@@ -18,10 +18,10 @@ export class CreateMarkingRequest {
 
   @IsEnum(MarkingResult)
   result!: MarkingResult;
-  
-  myTechnique!: TechniqueResponse;
 
-  opponentTechnique!: TechniqueResponse;
+  myTechnique: TechniqueResponse | null = null;
+
+  opponentTechnique: TechniqueResponse | null = null;
 
   @IsEnum(MarkingQuality)
   quality!: MarkingQuality;

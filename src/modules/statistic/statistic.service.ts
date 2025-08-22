@@ -151,7 +151,7 @@ export class StatisticService {
 
     for (const row of rows) {
       const { my_technique_id, note } = row;
-      if (!note?.trim()) continue;
+      if (!note?.trim() || !my_technique_id) continue;
 
       if (!topNotes[my_technique_id]) {
         topNotes[my_technique_id] = [];
