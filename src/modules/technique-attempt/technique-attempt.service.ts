@@ -5,22 +5,25 @@ import { mapToGetTechniqueAttemptRes } from '@/modules/technique-attempt/mapper/
 import { GetTechniqueAttemptResponse } from '@/modules/technique-attempt/dto/get-technique-attempt.response';
 import { AppError } from '@/shared/error/app-error';
 import { UpdateTechniqueAttemptRequest } from '@/modules/technique-attempt/dto/update-technique-attempt.request';
+import { TechniqueAttemptResponse } from '@/modules/technique-attempt/dto/technique-attempt.response';
 
 @Injectable()
 export class TechniqueAttemptService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(userId: number, dto: CreateTechniqueAttemptRequest) {
-    return await this.prisma.techniqueAttempt.create({
+  async create(userId: number, dto: CreateTechniqueAttemptRequest): Promise<TechniqueAttemptResponse> {
+    const attempt = await this.prisma.techniqueAttempt.create({
       data: {
         user_id: userId,
         technique_id: dto.techniqueId,
         match_id: dto.matchId,
       },
-      select: {
-        id: true,
+      include: {
+        technique: true,
       },
     });
+
+    return mapToGetTechniqueAttemptRes(attempt)
   }
 
   async getAttemptsByMatch(

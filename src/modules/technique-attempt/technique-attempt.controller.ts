@@ -8,11 +8,21 @@ import { BaseResponse } from '@/shared/dto/base-response.dto';
 import { TechniqueAttemptResponse } from '@/modules/technique-attempt/dto/technique-attempt.response';
 import { GetTechniqueAttemptsQuery } from '@/modules/technique-attempt/dto/get-technique-attempts.query';
 import { UpdateTechniqueAttemptRequest } from '@/modules/technique-attempt/dto/update-technique-attempt.request';
+import { CreateTechniqueAttemptRequest } from '@/modules/technique-attempt/dto/create-technique-attempt.request';
 
 @Authenticated()
 @Controller("techniques/attempts")
 export class TechniqueAttemptController {
   constructor(private readonly techniqueAttemptService: TechniqueAttemptService) {
+  }
+
+  @TypedRoute.Post()
+  async create(
+    @User() user: JwtPayload,
+    @TypedBody() dto: CreateTechniqueAttemptRequest,
+  ): Promise<BaseResponse<TechniqueAttemptResponse>> {
+    const result = await this.techniqueAttemptService.create(user.userId, dto)
+    return new BaseResponse(200, '생성 성공', result)
   }
 
   @TypedRoute.Get("")
