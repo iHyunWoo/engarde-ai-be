@@ -27,8 +27,8 @@ interface MarkingMapperInput{
   match_id: number
   timestamp: number
   result: MarkingResult
-  my_technique: TechniqueResponse
-  opponent_technique: TechniqueResponse
+  my_technique: TechniqueResponse | null
+  opponent_technique: TechniqueResponse | null
   quality: MarkingQuality
   remain_time: number
   note: string

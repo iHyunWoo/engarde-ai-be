@@ -84,10 +84,10 @@ model Marking {
   timestamp Float
   result    Result
 
-  my_technique_id       Int
-  opponent_technique_id Int
-  my_technique          Technique @relation("my_technique", fields: [my_technique_id], references: [id])
-  opponent_technique    Technique @relation("opponent_technique", fields: [opponent_technique_id], references: [id])
+  my_technique_id       Int?
+  opponent_technique_id Int?
+  my_technique          Technique? @relation("my_technique", fields: [my_technique_id], references: [id])
+  opponent_technique    Technique? @relation("opponent_technique", fields: [opponent_technique_id], references: [id])
 
   quality     MarkingQuality
   remain_time Int

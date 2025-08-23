@@ -8,8 +8,8 @@ export class MarkingResponse {
   id: number;
   timestamp: number;
   result: MarkingResult;
-  myTechnique: TechniqueResponse;
-  opponentTechnique: TechniqueResponse;
+  myTechnique: TechniqueResponse | null;
+  opponentTechnique: TechniqueResponse | null;
   quality: MarkingQuality;
   note: string;
   remainTime: number;

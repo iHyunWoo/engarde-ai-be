@@ -21,32 +21,43 @@ export class MarkingsService {
     });
     if (!match) throw new AppError('MATCH_NOT_FOUND');
 
-    const [myTechnique, opponentTechnique] = await Promise.all([
-      this.prisma.technique.findFirst({
+    let myTechniqueId: number | null = null;
+    let opponentTechniqueId: number | null = null;
+
+    // myTechnique 확인
+    if (dto.myTechnique) {
+      const found = await this.prisma.technique.findFirst({
         where: {
           user_id: userId,
           id: dto.myTechnique.id,
           deleted_at: null
         }
-      }),
-      this.prisma.technique.findFirst({
+      });
+      if (!found) throw new AppError('TECHNIQUE_NOT_FOUND');
+      myTechniqueId = found.id;
+    }
+
+    // opponentTechnique 확인
+    if (dto.opponentTechnique) {
+      const found = await this.prisma.technique.findFirst({
         where: {
           user_id: userId,
           id: dto.opponentTechnique.id,
           deleted_at: null
         }
-      })
-    ])
+      });
+      if (!found) throw new AppError('TECHNIQUE_NOT_FOUND');
+      opponentTechniqueId = found.id;
+    }
 
-    if (!myTechnique || !opponentTechnique) throw new AppError('TECHNIQUE_NOT_FOUND')
 
     const created = await this.prisma.marking.create({
       data: {
         match_id: dto.matchId,
         timestamp: dto.timestamp,
         result: dto.result,
-        my_technique_id: myTechnique.id,
-        opponent_technique_id: opponentTechnique.id,
+        my_technique_id: myTechniqueId,
+        opponent_technique_id: opponentTechniqueId,
         quality: dto.quality,
         note: dto.note,
         remain_time: dto.remainTime,
@@ -58,8 +69,8 @@ export class MarkingsService {
       }
     });
 
-    await this.techniqueService.useTechnique(myTechnique.id)
-    await this.techniqueService.useTechnique(opponentTechnique.id)
+    if (myTechniqueId) await this.techniqueService.useTechnique(myTechniqueId)
+    if (opponentTechniqueId) await this.techniqueService.useTechnique(opponentTechniqueId)
     
     if (dto.note?.trim()) {
       this.noteService.upsert(userId, dto.note)
