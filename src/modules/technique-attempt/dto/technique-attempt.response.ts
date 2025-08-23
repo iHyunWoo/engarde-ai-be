@@ -1,5 +1,8 @@
 export class TechniqueAttemptResponse {
   id: number;
-  techniqueName: string;
+  technique: {
+    id: number;
+    name: string;
+  }
   attemptCount: number;
 }

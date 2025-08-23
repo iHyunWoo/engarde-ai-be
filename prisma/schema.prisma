@@ -167,9 +167,9 @@ model TechniqueAttempt {
   match    Match? @relation(fields: [match_id], references: [id])
   match_id Int?
 
-  attemptCount Int
+  attempt_count Int @default(0)
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
