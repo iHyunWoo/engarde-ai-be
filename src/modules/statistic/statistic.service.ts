@@ -47,7 +47,7 @@ export class StatisticService {
         winCount: 0,
         topNotes: [],
       };
-      existing.attemptCount += attempt.attemptCount;
+      existing.attemptCount += attempt.attempt_count;
       statsMap.set(id, existing);
     }
 

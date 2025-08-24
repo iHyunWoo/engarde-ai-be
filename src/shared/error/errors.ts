@@ -23,6 +23,9 @@ export type ErrorKey =
   // OPPONENT
   | 'OPPONENT_NOT_FOUND'
 
+  // TECHNIQUE_ATTEMPT
+  | 'TECHNIQUE_ATTEMPT_NOT_FOUND'
+
   // ETC
   | 'SERVER_ERROR';
 
@@ -50,6 +53,9 @@ export const ERRORS: Record<ErrorKey, { code: number; message: string }> = {
 
   // OPPONENT
   OPPONENT_NOT_FOUND: {code: 400, message: '해당 상대를 찾을 수 없습니다'},
+
+  // TECHNIQUE_ATTEMPT
+  TECHNIQUE_ATTEMPT_NOT_FOUND: { code: 400, message: '해당 기술 시도를 찾을 수 없습니다' },
 
   // ETC
   SERVER_ERROR:    { code: 500, message: '서버 오류가 발생했습니다' },
