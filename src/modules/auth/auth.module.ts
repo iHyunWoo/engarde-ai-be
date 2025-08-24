@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { TechniqueModule } from '@/modules/technique/technique.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '15m' },
     }),
+    TechniqueModule
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard],

@@ -1,15 +1,15 @@
 import {
   Result as MarkingResult,
-  MarkingType as MarkingType,
   MarkingQuality as MarkingQuality,
 } from '@prisma/client';
+import { TechniqueResponse } from '@/modules/technique/dto/technique.response';
 
 export class MarkingResponse {
   id: number;
   timestamp: number;
   result: MarkingResult;
-  myType: MarkingType;
-  opponentType: MarkingType;
+  myTechnique: TechniqueResponse | null;
+  opponentTechnique: TechniqueResponse | null;
   quality: MarkingQuality;
   note: string;
   remainTime: number;

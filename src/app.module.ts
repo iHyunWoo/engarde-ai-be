@@ -7,8 +7,23 @@ import { MarkingModule } from '@/modules/marking/marking.module';
 import { NoteModule } from '@/modules/note/note.module';
 import { StatisticModule } from '@/modules/statistic/statistic.module';
 import { HttpContextModule } from '@/shared/lib/http/http-context.module';
+import { OpponentModule } from '@/modules/opponent/opponent.module';
+import { TechniqueModule } from '@/modules/technique/technique.module';
+import { TechniqueAttemptModule } from '@/modules/technique-attempt/technique-attempt.module';
 
 @Module({
-  imports: [HttpContextModule, PrismaModule, AuthModule, MatchModule, FileModule, MarkingModule, NoteModule, StatisticModule],
+  imports: [
+    HttpContextModule,
+    PrismaModule,
+    AuthModule,
+    MatchModule,
+    FileModule,
+    MarkingModule,
+    NoteModule,
+    StatisticModule,
+    OpponentModule,
+    TechniqueModule,
+    TechniqueAttemptModule,
+  ],
 })
 export class AppModule {}

@@ -2,9 +2,9 @@ import { IsInt, IsEnum, IsString, MaxLength, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 import {
   Result as MarkingResult,
-  MarkingType as MarkingType,
   MarkingQuality as MarkingQuality,
-} from '@prisma/client'
+} from '@prisma/client';
+import { TechniqueResponse } from '@/modules/technique/dto/technique.response';
 
 
 export class CreateMarkingRequest {
@@ -19,11 +19,9 @@ export class CreateMarkingRequest {
   @IsEnum(MarkingResult)
   result!: MarkingResult;
 
-  @IsEnum(MarkingType)
-  myType!: MarkingType;
+  myTechnique: TechniqueResponse | null = null;
 
-  @IsEnum(MarkingType)
-  opponentType!: MarkingType;
+  opponentTechnique: TechniqueResponse | null = null;
 
   @IsEnum(MarkingQuality)
   quality!: MarkingQuality;

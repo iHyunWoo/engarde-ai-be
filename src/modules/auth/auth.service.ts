@@ -13,6 +13,7 @@ import { LoginResponse } from '@/modules/auth/dto/login.response';
 import { CookieJar } from '@/shared/lib/http/cookie-jar';
 import { AppError } from '@/shared/error/app-error';
 import { JwtPayload } from '@/modules/auth/guards/jwt-payload';
+import { TechniqueService } from '@/modules/technique/technique.service';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +21,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private cookieJar: CookieJar,
+    private readonly techniqueService: TechniqueService,
   ) {}
 
   async signup(dto: SignupDto) {
@@ -27,13 +29,17 @@ export class AuthService {
     if (user) throw new ConflictException('This email already exists.');
 
     const hashed = await bcrypt.hash(dto.password, 10);
-    await this.prisma.user.create({
+    const newUser = await this.prisma.user.create({
       data: {
         email: dto.email,
         name: dto.name,
         password_hash: hashed,
       },
     });
+
+    // 생성된 유저에 default 기술 넣기
+    await this.techniqueService.setDefaultTechnique(newUser.id)
+
     return;
   }
 
