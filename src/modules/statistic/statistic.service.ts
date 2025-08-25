@@ -1,14 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import {
-  LossCountStatisticsResponse, TopNotesDTO,
+  LossCountStatisticsResponse, OpponentStat, TopNotesDTO,
   WinRateByTechniqueDto,
   WinRateStatisticsResponse,
 } from '@/modules/statistic/dto/get-statistic.response';
+import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.response';
+import { MatchStage } from '@prisma/client';
 
 @Injectable()
 export class StatisticService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getStatisticsByOpponent(userId: number, matches: GetMatchListResponse[]): Promise<OpponentStat[]> {
+    const grouped = this.groupMatchesByOpponent(matches);
+    const result: OpponentStat[] = [];
+
+    for (const [, opponentMatches] of grouped) {
+      const opponent = opponentMatches[0].opponent!;
+      const matchIds = opponentMatches.map((m) => m.id);
+
+      const basicStats = this.computeStats(opponentMatches);
+      const topTechniques = await this.getTopTechniques(userId, matchIds);
+
+      result.push({
+        opponent,
+        totalMatches: opponentMatches.length,
+        wins: basicStats.wins,
+        loses: basicStats.loses,
+        averageScore: basicStats.averageScore,
+        topWinTechniques: topTechniques.win,
+        topLoseTechniques: topTechniques.lose,
+      });
+    }
+
+    return result;
+  }
+
 
   // 각 기술 별 성공률
   async getWinRateByTechnique(userId: number, matchIds: number[]): Promise<WinRateStatisticsResponse> {
@@ -161,5 +189,114 @@ export class StatisticService {
     }
 
     return topNotes;
+  }
+
+  // 경기를 Opponent 별로 grouping
+  private groupMatchesByOpponent(matches: GetMatchListResponse[]) {
+    const grouped = new Map<number, GetMatchListResponse[]>();
+    for (const match of matches) {
+      const opponentId = match.opponent?.id;
+      if (!opponentId) continue;
+      if (!grouped.has(opponentId)) {
+        grouped.set(opponentId, []);
+      }
+      grouped.get(opponentId)!.push(match);
+    }
+    return grouped;
+  }
+
+  // 경기들의 스탯 계산
+  private computeStats(matches: GetMatchListResponse[]) {
+    let wins = 0, loses = 0;
+    let preMy = 0, preOpp = 0, preCnt = 0;  // 예선 스탯
+    let mainMy = 0, mainOpp = 0, mainCnt = 0;  // 본선 스탯
+
+    for (const match of matches) {
+      if (match.myScore > match.opponentScore) wins++;
+      else if (match.myScore < match.opponentScore) loses++;
+
+      if (match.stage === MatchStage.preliminary) {
+        preMy += match.myScore;
+        preOpp += match.opponentScore;
+        preCnt++;
+      } else if (match.stage === MatchStage.main) {
+        mainMy += match.myScore;
+        mainOpp += match.opponentScore;
+        mainCnt++;
+      }
+    }
+
+    return {
+      wins,
+      loses,
+      averageScore: {
+        preliminary: {
+          myScore: preCnt > 0 ? preMy / preCnt : 0,
+          opponentScore: preCnt > 0 ? preOpp / preCnt : 0,
+        },
+        main: {
+          myScore: mainCnt > 0 ? mainMy / mainCnt : 0,
+          opponentScore: mainCnt > 0 ? mainOpp / mainCnt : 0,
+        }
+      }
+    };
+  }
+
+  // 경기들의 승패 시 각각 최대 승리 본인 기술, 최대 패배 상대 기술
+  private async getTopTechniques(userId: number, matchIds: number[]) {
+    const markings = await this.prisma.marking.findMany({
+      where: {
+        match_id: { in: matchIds },
+        user_id: userId,
+        deleted_at: null,
+      },
+      select: {
+        result: true,
+        my_technique_id: true,
+        opponent_technique_id: true,
+      },
+    });
+
+    const winCounts: Record<number, number> = {};
+    const loseCounts: Record<number, number> = {};
+    const winIds = new Set<number>();
+    const loseIds = new Set<number>();
+
+    for (const m of markings) {
+      if (m.result === 'win' && m.my_technique_id) {
+        winCounts[m.my_technique_id] = (winCounts[m.my_technique_id] || 0) + 1;
+        winIds.add(m.my_technique_id);
+      }
+      if (m.result === 'lose' && m.opponent_technique_id) {
+        loseCounts[m.opponent_technique_id] = (loseCounts[m.opponent_technique_id] || 0) + 1;
+        loseIds.add(m.opponent_technique_id);
+      }
+    }
+
+    const [wins, loses] = await Promise.all([
+      this.prisma.technique.findMany({
+        where: { id: { in: Array.from(winIds) } },
+        select: { id: true, name: true },
+      }),
+      this.prisma.technique.findMany({
+        where: { id: { in: Array.from(loseIds) } },
+        select: { id: true, name: true },
+      }),
+    ]);
+
+    const winMap = new Map(wins.map((t) => [t.id, t.name]));
+    const loseMap = new Map(loses.map((t) => [t.id, t.name]));
+
+    return {
+      win: Object.entries(winCounts)
+        .map(([id, count]) => ({ id: +id, name: winMap.get(+id) ?? 'Unknown', count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3),
+
+      lose: Object.entries(loseCounts)
+        .map(([id, count]) => ({ id: +id, name: loseMap.get(+id) ?? 'Unknown', count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3),
+    };
   }
 }

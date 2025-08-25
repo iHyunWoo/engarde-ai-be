@@ -1,3 +1,6 @@
+import { OpponentResponse } from '@/modules/opponent/dto/opponent.response';
+import { TechniqueResponse } from '@/modules/technique/dto/technique.response';
+
 export interface TopNotesDTO {
   note: string;
   count: number;
@@ -19,8 +22,34 @@ export interface LossCountByTechniqueDto {
 export type WinRateStatisticsResponse = Record<number, WinRateByTechniqueDto>;
 export type LossCountStatisticsResponse = Record<number, LossCountByTechniqueDto>;
 
+export interface TechniqueStat {
+  id: number;
+  name: string;
+  count: number;
+}
+
+export interface OpponentStat {
+  opponent: OpponentResponse;
+  totalMatches: number;
+  wins: number;
+  loses: number;
+  averageScore: {
+    preliminary: {
+      myScore: number;
+      opponentScore: number;
+  },
+    main: {
+      myScore: number;
+      opponentScore: number;
+    },
+  };
+  topWinTechniques: TechniqueStat[]
+  topLoseTechniques: TechniqueStat[]
+}
+
 export class GetStatisticResponse {
   matchCount: number;
+  opponentStats: OpponentStat[]
   winRate: WinRateStatisticsResponse;
   lossCount: LossCountStatisticsResponse;
 }
