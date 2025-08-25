@@ -252,51 +252,50 @@ export class StatisticService {
       },
       select: {
         result: true,
-        my_technique_id: true,
-        opponent_technique_id: true,
+        my_technique: {
+          select: { id: true, name: true, deleted_at: true },
+        },
+        opponent_technique: {
+          select: { id: true, name: true, deleted_at: true },
+        },
       },
     });
 
-    const winCounts: Record<number, number> = {};
-    const loseCounts: Record<number, number> = {};
-    const winIds = new Set<number>();
-    const loseIds = new Set<number>();
-
+    const winCounts: Record<number, { name: string; count: number }> = {};
+    const loseCounts: Record<number, { name: string; count: number }> = {};
     for (const m of markings) {
-      if (m.result === 'win' && m.my_technique_id) {
-        winCounts[m.my_technique_id] = (winCounts[m.my_technique_id] || 0) + 1;
-        winIds.add(m.my_technique_id);
+      if (m.result === 'win' && m.my_technique && m.my_technique.deleted_at === null) {
+        const id = m.my_technique.id;
+        const name = m.my_technique.name;
+        winCounts[id] = {
+          name,
+          count: (winCounts[id]?.count || 0) + 1,
+        };
       }
-      if (m.result === 'lose' && m.opponent_technique_id) {
-        loseCounts[m.opponent_technique_id] = (loseCounts[m.opponent_technique_id] || 0) + 1;
-        loseIds.add(m.opponent_technique_id);
+
+      if (m.result === 'lose' && m.opponent_technique && m.opponent_technique.deleted_at === null) {
+        const id = m.opponent_technique.id;
+        const name = m.opponent_technique.name;
+        loseCounts[id] = {
+          name,
+          count: (loseCounts[id]?.count || 0) + 1,
+        };
       }
     }
 
-    const [wins, loses] = await Promise.all([
-      this.prisma.technique.findMany({
-        where: { id: { in: Array.from(winIds) } },
-        select: { id: true, name: true },
-      }),
-      this.prisma.technique.findMany({
-        where: { id: { in: Array.from(loseIds) } },
-        select: { id: true, name: true },
-      }),
-    ]);
+    const topWins = Object.entries(winCounts)
+      .map(([id, { name, count }]) => ({ id: +id, name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
 
-    const winMap = new Map(wins.map((t) => [t.id, t.name]));
-    const loseMap = new Map(loses.map((t) => [t.id, t.name]));
+    const topLoses = Object.entries(loseCounts)
+      .map(([id, { name, count }]) => ({ id: +id, name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
 
     return {
-      win: Object.entries(winCounts)
-        .map(([id, count]) => ({ id: +id, name: winMap.get(+id) ?? 'Unknown', count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 3),
-
-      lose: Object.entries(loseCounts)
-        .map(([id, count]) => ({ id: +id, name: loseMap.get(+id) ?? 'Unknown', count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 3),
+      win: topWins,
+      lose: topLoses,
     };
   }
 }
