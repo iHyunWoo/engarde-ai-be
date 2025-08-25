@@ -46,6 +46,9 @@ export class StatisticService {
         user_id: userId,
         match_id: { in: matchIds },
         deleted_at: null,
+        technique: {
+          deleted_at: null,
+        },
       },
       include: {
         technique: true,
@@ -59,6 +62,9 @@ export class StatisticService {
         match_id: { in: matchIds },
         result: 'win',
         deleted_at: null,
+        my_technique: {
+          deleted_at: null,
+        },
       },
       include: {
         my_technique: true,
@@ -121,6 +127,7 @@ export class StatisticService {
         match_id: { in: matchIds },
         result: 'lose',
         deleted_at: null,
+        opponent_technique: { deleted_at: null }
       },
       include: {
         opponent_technique: true,
