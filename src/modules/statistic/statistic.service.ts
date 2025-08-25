@@ -6,7 +6,7 @@ import {
   WinRateStatisticsResponse,
 } from '@/modules/statistic/dto/get-statistic.response';
 import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.response';
-import { MatchStage } from '@prisma/client';
+import { MatchStage as MatchStage } from '@prisma/client';
 
 @Injectable()
 export class StatisticService {

@@ -1,5 +1,6 @@
 import { OpponentResponse } from '@/modules/opponent/dto/opponent.response';
 import { TechniqueAttemptResponse } from '@/modules/technique-attempt/dto/technique-attempt.response';
+import { MatchStage as MatchStage } from '@prisma/client';
 
 export class GetMatchResponse {
   id: number;
@@ -11,4 +12,5 @@ export class GetMatchResponse {
   opponentScore: number;
   createdAt: string;
   techniqueAttempt: TechniqueAttemptResponse[];
+  stage: MatchStage;
 }

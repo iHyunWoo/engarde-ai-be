@@ -2,7 +2,7 @@ import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.respons
 import { GetMatchResponse } from '@/modules/match/dto/get-match.response';
 import { DeleteMatchResponse } from '@/modules/match/dto/delete-match.response';
 import { OpponentResponse } from '@/modules/opponent/dto/opponent.response';
-import { Match } from '@prisma/client';
+import { Match, MatchStage } from '@prisma/client';
 import { TechniqueAttemptResponse } from '@/modules/technique-attempt/dto/technique-attempt.response';
 
 
@@ -13,6 +13,7 @@ export const mapToGetMatchListRes = (m: MatchMapperInput): GetMatchListResponse 
   myScore: m.my_score,
   opponentScore: m.opponent_score,
   tournamentDate: m.tournament_date,
+  stage: m.stage,
 });
 
 export const mapToGetMatchRes = (m: MatchMapperInput): GetMatchResponse => ({
@@ -25,6 +26,7 @@ export const mapToGetMatchRes = (m: MatchMapperInput): GetMatchResponse => ({
   opponentScore: m.opponent_score,
   techniqueAttempt: m.techniqueAttempt ?? [],
   createdAt: m.created_at.toISOString(),
+  stage: m.stage,
 });
 
 export const mapToDeleteRes = (m: Match): DeleteMatchResponse => ({
@@ -42,6 +44,7 @@ interface MatchMapperInput {
   opponent_score: number
   user_id: number
   techniqueAttempt?: TechniqueAttemptResponse[]
+  stage: MatchStage
   created_at: Date
   updated_at: Date
   deleted_at: Date | null

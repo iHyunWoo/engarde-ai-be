@@ -41,6 +41,7 @@ export class MatchService {
         opponent_id: opponent.id,
         my_score: dto.myScore,
         opponent_score: dto.opponentScore,
+        stage: dto.stage
       },
     });
 
@@ -81,6 +82,7 @@ export class MatchService {
         opponent_id: opponent.id,
         my_score: dto.myScore,
         opponent_score: dto.opponentScore,
+        stage: dto.stage,
       },
     });
 
