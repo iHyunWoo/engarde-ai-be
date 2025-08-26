@@ -213,4 +213,22 @@ export class MatchService {
 
     return mapToGetMatchRes(match);
   }
+
+  async findAllByOpponent(
+    userId: number,
+    opponentId: number
+  ): Promise<GetMatchListResponse[]>  {
+    const matches = await this.prisma.match.findMany({
+      where: {
+        user_id: userId,
+        opponent_id: opponentId,
+        deleted_at: null,
+      },
+      include: {
+        opponent: true
+      }
+    })
+
+    return matches.map(mapToGetMatchListRes);
+  }
 }

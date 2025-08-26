@@ -9,11 +9,21 @@ import { Authenticated } from '@/shared/decorators/authenticated.decorator';
 import { BaseResponse } from '@/shared/dto/base-response.dto';
 import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request';
 import { TypedBody, TypedParam, TypedQuery, TypedRoute } from '@nestia/core';
+import { GetMatchByOpponentQuery } from '@/modules/match/dto/get-match-by-opponent.query';
 
 @Authenticated()
 @Controller('matches')
 export class MatchController {
   constructor(private readonly matchService: MatchService) {}
+
+  @TypedRoute.Get('opponent')
+  async getMatchByOpponent(
+    @User() user: JwtPayload,
+    @TypedQuery() query: GetMatchByOpponentQuery,
+  ) {
+    const result = await this.matchService.findAllByOpponent(user.userId, query.opponentId)
+    return new BaseResponse(200, '조회 성공', result)
+  }
 
   @TypedRoute.Post()
   @HttpCode(201)
