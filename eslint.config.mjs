@@ -28,5 +28,14 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn'
     },
+    overrides: [
+      {
+        files: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+        rules: {
+          "@typescript-eslint/no-explicit-any": "off", // test에서는 허용
+        },
+      },
+    ],
   },
+
 );

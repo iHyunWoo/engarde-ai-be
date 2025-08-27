@@ -3,9 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum Result {
@@ -105,7 +106,7 @@ model Note {
   user_id Int
   user    User @relation(fields: [user_id], references: [id])
 
-  text         String    @db.Citext // 대소문자 구분 X
+  text         String
   last_used_at DateTime  @default(now())
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt

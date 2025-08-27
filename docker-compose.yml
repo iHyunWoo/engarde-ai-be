@@ -1,0 +1,16 @@
+services:
+  db:
+    build:
+      context: ./docker/postgres
+    image: postgres:15
+    container_name: test-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: test_db
+
+volumes:
+  pgdata: {}
+  db-data-test: {}
