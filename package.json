@@ -23,7 +23,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:db:up": "docker-compose up -d",
     "test:db:down": "docker-compose down -v",
-    "test:e2e": "pnpm test:db:up && cp .env.test .env && npx prisma db push --force-reset && jest",
+    "test:e2e": "pnpm test:db:up && cp .env.test .env && npx prisma db push --force-reset && npx jest --config=jest.config.ts",
     "prepare": "ts-patch install",
     "sdk": "npx nestia sdk && ts-node scripts/generate-structures-index.ts"
   },
@@ -82,26 +82,5 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.20.0"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    },
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "allowJs": false
   }
 }
