@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 WORKDIR /
 
 # pnpm 활성화
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN npm install -g pnpm
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
@@ -21,6 +21,8 @@ FROM node:20-alpine
 WORKDIR /
 ENV NODE_ENV=production \
     PORT=8080
+
+RUN npm install -g pnpm
 
 # 런타임에 필요한 것만 복사
 COPY --from=builder /node_modules ./node_modules
