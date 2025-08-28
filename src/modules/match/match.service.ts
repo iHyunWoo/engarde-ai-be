@@ -34,14 +34,14 @@ export class MatchService {
 
     const match = await this.prisma.match.create({
       data: {
-        user_id: userId,
-        object_name: dto.objectName ?? null,
-        tournament_name: dto.tournamentName,
-        tournament_date: new Date(dto.tournamentDate),
-        opponent_id: opponent.id,
-        my_score: dto.myScore,
-        opponent_score: dto.opponentScore,
-        stage: dto.stage
+        userId,
+        objectName: dto.objectName ?? null,
+        tournamentName: dto.tournamentName,
+        tournamentDate: new Date(dto.tournamentDate),
+        opponentId: opponent.id,
+        myScore: dto.myScore,
+        opponentScore: dto.opponentScore,
+        stage: dto.stage,
       },
     });
 
@@ -59,8 +59,8 @@ export class MatchService {
       where: { id: matchId },
     });
     if (!match) throw new AppError('MATCH_NOT_FOUND');
-    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
-    if (match.deleted_at) throw new AppError('MATCH_GONE');
+    if (userId !== match.userId) throw new AppError('MATCH_FORBIDDEN');
+    if (match.deletedAt) throw new AppError('MATCH_GONE');
 
     // 상대를 찾고 없다면 생성
     const opponent = await this.opponentService.findOrCreate(
@@ -76,12 +76,12 @@ export class MatchService {
         id: matchId,
       },
       data: {
-        object_name: dto.objectName,
-        tournament_name: dto.tournamentName,
-        tournament_date: new Date(dto.tournamentDate),
-        opponent_id: opponent.id,
-        my_score: dto.myScore,
-        opponent_score: dto.opponentScore,
+        objectName: dto.objectName,
+        tournamentName: dto.tournamentName,
+        tournamentDate: new Date(dto.tournamentDate),
+        opponentId: opponent.id,
+        myScore: dto.myScore,
+        opponentScore: dto.opponentScore,
         stage: dto.stage,
       },
     });
@@ -96,12 +96,12 @@ export class MatchService {
   async delete(userId: number, id: number): Promise<DeleteMatchResponse> {
     const match = await this.prisma.match.findUnique({ where: { id } });
     if (!match) throw new AppError('MATCH_NOT_FOUND');
-    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
-    if (match.deleted_at) throw new AppError('MATCH_GONE');
+    if (userId !== match.userId) throw new AppError('MATCH_FORBIDDEN');
+    if (match.deletedAt) throw new AppError('MATCH_GONE');
 
     const updated = await this.prisma.match.update({
       where: { id },
-      data: { deleted_at: new Date() },
+      data: { deletedAt: new Date() },
     });
 
     return mapToDeleteRes(updated);
@@ -176,7 +176,7 @@ export class MatchService {
     const dateRange =
       from || to
         ? {
-          tournament_date: {
+          tournamentDate: {
             ...(from && { gte: new Date(from) }),
             ...(to && { lte: new Date(to) }),
           },
@@ -184,8 +184,8 @@ export class MatchService {
         : {};
 
     return {
-      user_id: userId,
-      deleted_at: null,
+      userId,
+      deletedAt: null,
       ...dateRange,
     };
   }
@@ -193,9 +193,9 @@ export class MatchService {
   async findOne(userId: number, id: number): Promise<GetMatchResponse> {
     const match = await this.prisma.match.findUnique({
       where: {
-        id: id,
-        user_id: userId,
-        deleted_at: null,
+        id,
+        userId,
+        deletedAt: null,
       },
       include: {
         opponent: {
@@ -208,8 +208,8 @@ export class MatchService {
       },
     });
     if (!match) throw new AppError('MATCH_NOT_FOUND');
-    if (userId !== match.user_id) throw new AppError('MATCH_FORBIDDEN');
-    if (match.deleted_at) throw new AppError('MATCH_GONE');
+    if (userId !== match.userId) throw new AppError('MATCH_FORBIDDEN');
+    if (match.deletedAt) throw new AppError('MATCH_GONE');
 
     return mapToGetMatchRes(match);
   }
@@ -217,17 +217,17 @@ export class MatchService {
   async findAllByOpponent(
     userId: number,
     opponentId: number
-  ): Promise<GetMatchListResponse[]>  {
+  ): Promise<GetMatchListResponse[]> {
     const matches = await this.prisma.match.findMany({
       where: {
-        user_id: userId,
-        opponent_id: opponentId,
-        deleted_at: null,
+        userId,
+        opponentId,
+        deletedAt: null,
       },
       include: {
-        opponent: true
-      }
-    })
+        opponent: true,
+      },
+    });
 
     return matches.map(mapToGetMatchListRes);
   }

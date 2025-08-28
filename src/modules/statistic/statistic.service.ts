@@ -43,11 +43,11 @@ export class StatisticService {
     // 각 기술 별 시도 횟수
     const attempts = await this.prisma.techniqueAttempt.findMany({
       where: {
-        user_id: userId,
-        match_id: { in: matchIds },
-        deleted_at: null,
+        userId: userId,
+        matchId: { in: matchIds },
+        deletedAt: null,
         technique: {
-          deleted_at: null,
+          deletedAt: null,
         },
       },
       include: {
@@ -58,16 +58,16 @@ export class StatisticService {
     // Marking 테이블에서 각 기술 별 성공 횟수를 가져옴
     const winMarkings = await this.prisma.marking.findMany({
       where: {
-        user_id: userId,
-        match_id: { in: matchIds },
+        userId: userId,
+        matchId: { in: matchIds },
         result: 'win',
-        deleted_at: null,
-        my_technique: {
-          deleted_at: null,
+        deletedAt: null,
+        myTechnique: {
+          deletedAt: null,
         },
       },
       include: {
-        my_technique: true,
+        myTechnique: true,
       },
     });
 
@@ -81,13 +81,13 @@ export class StatisticService {
         winCount: 0,
         topNotes: [],
       };
-      existing.attemptCount += attempt.attempt_count;
+      existing.attemptCount += attempt.attemptCount;
       statsMap.set(id, existing);
     }
 
     // 기술 별 성공 횟수 집계
     for (const marking of winMarkings) {
-      const technique = marking.my_technique;
+      const technique = marking.myTechnique;
       if (!technique) continue;
 
       const { id, name } = technique;
@@ -123,14 +123,14 @@ export class StatisticService {
     // Loss 마킹 중 상대방 기술 가져오기
     const lossMarkings = await this.prisma.marking.findMany({
       where: {
-        user_id: userId,
-        match_id: { in: matchIds },
+        userId: userId,
+        matchId: { in: matchIds },
         result: 'lose',
-        deleted_at: null,
-        opponent_technique: { deleted_at: null }
+        deletedAt: null,
+        opponentTechnique: { deletedAt: null }
       },
       include: {
-        opponent_technique: true,
+        opponentTechnique: true,
       },
     });
 
@@ -138,7 +138,7 @@ export class StatisticService {
 
     // 기술별 횟수 집계
     for (const marking of lossMarkings) {
-      const technique = marking.opponent_technique;
+      const technique = marking.opponentTechnique;
       if (!technique) continue;
 
       const { id, name } = technique;
@@ -167,13 +167,13 @@ export class StatisticService {
   // 기술 별 해당 마킹의 Note 중 상위 빈도 note 가져오기
   private async getTopNotesByTechnique(userId: number, matchIds: number[], take: number = 3) {
     const rows = await this.prisma.marking.groupBy({
-      by: ['my_technique_id', 'note'],
+      by: ['myTechniqueId', 'note'],
       where: {
-        user_id: userId,
-        match_id: { in: matchIds },
+        userId: userId,
+        matchId: { in: matchIds },
         result: 'win',
         note: { not: '' },
-        deleted_at: null,
+        deletedAt: null,
       },
       _count: true,
       orderBy: {
@@ -185,14 +185,14 @@ export class StatisticService {
     const topNotes: Record<number, TopNotesDTO[]> = {};
 
     for (const row of rows) {
-      const { my_technique_id, note } = row;
-      if (!note?.trim() || !my_technique_id) continue;
+      const { myTechniqueId, note } = row;
+      if (!note?.trim() || !myTechniqueId) continue;
 
-      if (!topNotes[my_technique_id]) {
-        topNotes[my_technique_id] = [];
+      if (!topNotes[myTechniqueId]) {
+        topNotes[myTechniqueId] = [];
       }
 
-      topNotes[my_technique_id].push({ note, count: row._count });
+      topNotes[myTechniqueId].push({ note, count: row._count });
     }
 
     return topNotes;
@@ -253,17 +253,17 @@ export class StatisticService {
   private async getTopTechniques(userId: number, matchIds: number[]) {
     const markings = await this.prisma.marking.findMany({
       where: {
-        match_id: { in: matchIds },
-        user_id: userId,
-        deleted_at: null,
+        matchId: { in: matchIds },
+        userId: userId,
+        deletedAt: null,
       },
       select: {
         result: true,
-        my_technique: {
-          select: { id: true, name: true, deleted_at: true },
+        myTechnique: {
+          select: { id: true, name: true, deletedAt: true },
         },
-        opponent_technique: {
-          select: { id: true, name: true, deleted_at: true },
+        opponentTechnique: {
+          select: { id: true, name: true, deletedAt: true },
         },
       },
     });
@@ -271,18 +271,18 @@ export class StatisticService {
     const winCounts: Record<number, { name: string; count: number }> = {};
     const loseCounts: Record<number, { name: string; count: number }> = {};
     for (const m of markings) {
-      if (m.result === 'win' && m.my_technique && m.my_technique.deleted_at === null) {
-        const id = m.my_technique.id;
-        const name = m.my_technique.name;
+      if (m.result === 'win' && m.myTechnique && m.myTechnique.deletedAt === null) {
+        const id = m.myTechnique.id;
+        const name = m.myTechnique.name;
         winCounts[id] = {
           name,
           count: (winCounts[id]?.count || 0) + 1,
         };
       }
 
-      if (m.result === 'lose' && m.opponent_technique && m.opponent_technique.deleted_at === null) {
-        const id = m.opponent_technique.id;
-        const name = m.opponent_technique.name;
+      if (m.result === 'lose' && m.opponentTechnique && m.opponentTechnique.deletedAt === null) {
+        const id = m.opponentTechnique.id;
+        const name = m.opponentTechnique.name;
         loseCounts[id] = {
           name,
           count: (loseCounts[id]?.count || 0) + 1,
