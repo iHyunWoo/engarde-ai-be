@@ -24,7 +24,7 @@
     "test:db:up": "docker-compose up -d",
     "test:db:down": "docker-compose down -v",
     "test:e2e": "pnpm test:db:up && cp .env.test .env && npx prisma db push --force-reset && npx jest --config=jest.config.ts",
-    "prepare": "ts-patch install",
+    "prepare": "typia patch",
     "sdk": "npx nestia sdk && ts-node scripts/generate-structures-index.ts"
   },
   "dependencies": {
@@ -44,7 +44,8 @@
     "firebase-admin": "^13.4.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typia": "^9.7.1"
+    "typia": "^9.7.1",
+    "@nestia/sdk": "^7.3.3"
   },
   "devDependencies": {
     "@babel/core": "^7.28.3",
@@ -53,7 +54,6 @@
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
     "@nestia/benchmark": "^7.3.3",
-    "@nestia/sdk": "^7.3.3",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
@@ -78,9 +78,9 @@
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
-    "ts-patch": "^3.3.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "~5.9.2",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "ts-patch": "^3.3.0"
   }
 }

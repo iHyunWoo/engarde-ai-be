@@ -8,6 +8,9 @@ RUN corepack enable && corepack prepare pnpm@9 --activate
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
+# ts-patch 적용
+RUN pnpm exec ts-patch install
+
 # 빌드
 COPY . .
 RUN pnpm prisma generate
