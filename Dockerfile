@@ -28,4 +28,4 @@ COPY --from=builder /dist ./dist
 COPY package.json ./
 
 EXPOSE 8080
-CMD ["node", "dist/main.js"]
+CMD ["pnpm", "start"]
