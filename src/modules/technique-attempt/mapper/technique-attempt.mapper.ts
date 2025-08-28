@@ -5,7 +5,7 @@ export const mapToGetTechniqueAttemptRes = (input: TechniqueAttemptMapperInput):
   return {
     id: input.id,
     technique: input.technique,
-    attemptCount: input.attempt_count
+    attemptCount: input.attemptCount
   }
 }
 

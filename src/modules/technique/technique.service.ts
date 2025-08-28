@@ -21,12 +21,12 @@ export class TechniqueService {
     return this.prisma.technique.findMany({
       take: 5,
       where: {
-        user_id: userId,
-        deleted_at: null,
+        userId: userId,
+        deletedAt: null,
         name: { contains: query, mode: 'insensitive' }
       },
       orderBy: [
-        { last_used_at: 'desc' },
+        { lastUsedAt: 'desc' },
         { name: 'asc' }
       ]
     })
@@ -38,14 +38,14 @@ export class TechniqueService {
   ): Promise<TechniqueResponse[]> {
     return await this.prisma.technique.findMany({
       where: {
-        user_id: userId,
-        deleted_at: null,
-        parent_id: null,
+        userId: userId,
+        deletedAt: null,
+        parentId: null,
       },
       include: {
         children: {
           where: {
-            deleted_at: null
+            deletedAt: null
           }
         }
       }
@@ -61,9 +61,9 @@ export class TechniqueService {
 
     const techniques = await this.prisma.technique.findMany({
       where: {
-        user_id: userId,
-        deleted_at: null,
-        parent_id: null,
+        userId: userId,
+        deletedAt: null,
+        parentId: null,
       },
       orderBy: { id: 'desc' },
       take: take + 1,
@@ -74,7 +74,7 @@ export class TechniqueService {
       include: {
         children: {
           where: {
-            deleted_at: null
+            deletedAt: null
           }
         }
       }
@@ -93,8 +93,8 @@ export class TechniqueService {
     const technique = await this.prisma.technique.findFirst({
       where: {
         id: techniqueId,
-        user_id: userId,
-        deleted_at: null
+        userId: userId,
+        deletedAt: null
       }
     })
 
@@ -102,8 +102,8 @@ export class TechniqueService {
 
     const isDuplicate = await this.prisma.technique.findFirst({
       where: {
-        user_id: userId,
-        deleted_at: null,
+        userId: userId,
+        deletedAt: null,
         name: dto.name,
         type: dto.type,
         NOT: { id: techniqueId },
@@ -119,8 +119,8 @@ export class TechniqueService {
       data: {
         name: dto.name,
         type: dto.type,
-        parent_id: dto.parentId,
-        last_used_at: new Date()
+        parentId: dto.parentId,
+        lastUsedAt: new Date()
       }
     })
   }
@@ -131,7 +131,7 @@ export class TechniqueService {
         id: techniqueId
       },
       data: {
-        last_used_at: new Date()
+        lastUsedAt: new Date()
       }
     })
   }
@@ -139,9 +139,9 @@ export class TechniqueService {
   async delete(userId: number, techniqueId: number): Promise<TechniqueResponse> {
     const technique = await this.prisma.technique.findFirst({
       where: {
-        user_id: userId,
+        userId: userId,
         id: techniqueId,
-        deleted_at: null
+        deletedAt: null
       }
     })
 
@@ -159,17 +159,17 @@ export class TechniqueService {
           id: { in: allTechniqueIds },
         },
         data: {
-          deleted_at: now,
+          deletedAt: now,
         },
       }),
       // technique attempt 에서 참조되는 attempt delete
       this.prisma.techniqueAttempt.updateMany({
         where: {
-          technique_id: { in: allTechniqueIds },
-          deleted_at: null,
+          techniqueId: { in: allTechniqueIds },
+          deletedAt: null,
         },
         data: {
-          deleted_at: now,
+          deletedAt: now,
         },
       }),
     ]);
@@ -185,15 +185,15 @@ export class TechniqueService {
   async create(userId: number, dto: UpsertTechniqueRequest): Promise<TechniqueResponse> {
     const techniqueCount = await this.prisma.technique.count({
       where: {
-        user_id: userId,
-        deleted_at: null
+        userId: userId,
+        deletedAt: null
       }
     })
 
     const isDuplicate = await this.prisma.technique.findFirst({
       where: {
-        user_id: userId,
-        deleted_at: null,
+        userId: userId,
+        deletedAt: null,
         name: dto.name,
         type: dto.type,
       }
@@ -204,10 +204,10 @@ export class TechniqueService {
     if (techniqueCount >= this.TECHNIQUE_MAX_COUNT) throw new AppError('TECHNIQUE_MAX')
     return await this.prisma.technique.create({
       data: {
-        user_id: userId,
+        userId: userId,
         name: dto.name,
         type: dto.type,
-        parent_id: dto.parentId,
+        parentId: dto.parentId,
       }
     })
   }
@@ -216,8 +216,8 @@ export class TechniqueService {
     await this.prisma.technique.createMany({
       data: DEFAULT_TECHNIQUES.map((technique) => ({
         ...technique,
-        user_id: userId,
-        parent_id: null
+        userId: userId,
+        parentId: null
       })),
     });
   }
@@ -230,9 +230,9 @@ export class TechniqueService {
       const current = stack.pop()!;
       const children = await this.prisma.technique.findMany({
         where: {
-          user_id: userId,
-          parent_id: current,
-          deleted_at: null,
+          userId: userId,
+          parentId: current,
+          deletedAt: null,
         },
         select: { id: true },
       });

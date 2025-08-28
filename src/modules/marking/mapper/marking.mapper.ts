@@ -10,11 +10,11 @@ export function mapToMarkingRes(row: MarkingMapperInput): MarkingResponse {
     id: row.id,
     timestamp: row.timestamp,
     result: row.result,
-    myTechnique: row.my_technique,
-    opponentTechnique: row.opponent_technique,
+    myTechnique: row.myTechnique,
+    opponentTechnique: row.opponentTechnique,
     quality: row.quality,
     note: row.note,
-    remainTime: row.remain_time,
+    remainTime: row.remainTime,
   };
 }
 
@@ -24,12 +24,12 @@ export function mapToMarkingResList(rows: MarkingMapperInput[]): MarkingResponse
 
 interface MarkingMapperInput{
   id: number
-  match_id: number
+  matchId: number
   timestamp: number
   result: MarkingResult
-  my_technique: TechniqueResponse | null
-  opponent_technique: TechniqueResponse | null
+  myTechnique: TechniqueResponse | null
+  opponentTechnique: TechniqueResponse | null
   quality: MarkingQuality
-  remain_time: number
+  remainTime: number
   note: string
 }

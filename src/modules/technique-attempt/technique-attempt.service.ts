@@ -14,9 +14,9 @@ export class TechniqueAttemptService {
   async create(userId: number, dto: CreateTechniqueAttemptRequest): Promise<TechniqueAttemptResponse> {
     const attempt = await this.prisma.techniqueAttempt.create({
       data: {
-        user_id: userId,
-        technique_id: dto.techniqueId,
-        match_id: dto.matchId,
+        userId: userId,
+        techniqueId: dto.techniqueId,
+        matchId: dto.matchId,
       },
       include: {
         technique: true,
@@ -32,9 +32,9 @@ export class TechniqueAttemptService {
   ): Promise<GetTechniqueAttemptResponse[]> {
     const attempts = await this.prisma.techniqueAttempt.findMany({
       where: {
-        user_id: userId,
-        match_id: matchId,
-        deleted_at: null,
+        userId: userId,
+        matchId: matchId,
+        deletedAt: null,
       },
       include: {
         technique: true,
@@ -53,8 +53,8 @@ export class TechniqueAttemptService {
     const attempt = await this.prisma.techniqueAttempt.findFirst({
       where: {
         id: techniqueAttemptId,
-        user_id: userId,
-        deleted_at: null
+        userId: userId,
+        deletedAt: null
       }
     })
 
@@ -65,7 +65,7 @@ export class TechniqueAttemptService {
         id: techniqueAttemptId
       },
       data: {
-        attempt_count: Math.max(0, attempt.attempt_count + dto.delta),
+        attemptCount: Math.max(0, attempt.attemptCount + dto.delta),
       },
       select: {
         id: true,
@@ -80,8 +80,8 @@ export class TechniqueAttemptService {
     const attempt = await this.prisma.techniqueAttempt.findFirst({
       where: {
         id: techniqueAttemptId,
-        user_id: userId,
-        deleted_at: null
+        userId: userId,
+        deletedAt: null
       }
     })
 
@@ -92,7 +92,7 @@ export class TechniqueAttemptService {
         id: techniqueAttemptId
       },
       data: {
-        deleted_at: new Date()
+        deletedAt: new Date()
       },
       select: {
         id: true,

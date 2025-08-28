@@ -15,15 +15,15 @@ export class OpponentService {
     return this.prisma.opponent.findMany({
       take: 5,
       where: {
-        user_id: userId,
-        deleted_at: null,
+        userId: userId,
+        deletedAt: null,
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { team: { contains: query, mode: 'insensitive' } },
         ],
       },
       orderBy: [
-        { last_used_at: 'desc' }, // 최근 사용 우선
+        { lastUsedAt: 'desc' }, // 최근 사용 우선
         { name: 'asc' },
         { team: 'asc' }
       ],
@@ -39,8 +39,8 @@ export class OpponentService {
 
     const matches = await this.prisma.opponent.findMany({
       where: {
-        user_id: userId,
-        deleted_at: null,
+        userId: userId,
+        deletedAt: null,
       },
       orderBy: { id: 'desc' },
       take: take + 1,
@@ -68,8 +68,8 @@ export class OpponentService {
     const opponent = await this.prisma.opponent.findFirst({
       where: {
         id: opponentId,
-        user_id: userId,
-        deleted_at: null,
+        userId: userId,
+        deletedAt: null,
       }
     })
 
@@ -82,7 +82,7 @@ export class OpponentService {
       data: {
         name: dto.name,
         team: dto.team,
-        last_used_at: new Date()
+        lastUsedAt: new Date()
       }
     })
   }
@@ -93,7 +93,7 @@ export class OpponentService {
         id: opponentId
       },
       data: {
-        last_used_at: new Date()
+        lastUsedAt: new Date()
       }
     })
   }
@@ -105,10 +105,10 @@ export class OpponentService {
   ): Promise<Opponent> {
     const existing = await this.prisma.opponent.findFirst({
       where: {
-        user_id: userId,
+        userId: userId,
         name,
         team,
-        deleted_at: null,
+        deletedAt: null,
       },
     });
 
@@ -116,7 +116,7 @@ export class OpponentService {
 
     return this.prisma.opponent.create({
       data: {
-        user_id: userId,
+        userId: userId,
         name,
         team,
       },
@@ -126,9 +126,9 @@ export class OpponentService {
   async delete(userId: number, opponentId: number): Promise<OpponentResponse> {
     const opponent = await this.prisma.opponent.findFirst({
       where: {
-        user_id: userId,
+        userId: userId,
         id: opponentId,
-        deleted_at: null
+        deletedAt: null
       }
     })
 
@@ -138,7 +138,7 @@ export class OpponentService {
         id: opponentId
       },
       data: {
-        deleted_at: new Date()
+        deletedAt: new Date()
       }
     })
   }
@@ -146,7 +146,7 @@ export class OpponentService {
   async create(userId: number, dto: UpsertOpponentRequest): Promise<OpponentResponse> {
     return await this.prisma.opponent.create({
       data: {
-        user_id: userId,
+        userId: userId,
         name: dto.name,
         team: dto.team
       }
