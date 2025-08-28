@@ -23,7 +23,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:db:up": "docker-compose up -d",
     "test:db:down": "docker-compose down -v",
-    "test:e2e": "pnpm test:db:up && cp .env.test .env && npx prisma db push --force-reset && npx jest --config=jest.config.ts",
+    "test:e2e": "pnpm test:db:up && cp .env.test .env && npx prisma db push --force-reset && npx jest --config=jest.config.e2e.ts",
+    "test:unit": "jest --config jest.config.unit.ts",
+    "test:unit:watch": "jest --config jest.config.unit.ts --watch",
+    "test:unit:coverage": "jest --config jest.config.unit.ts --coverage",
     "prepare": "typia patch",
     "sdk": "npx nestia sdk && ts-node scripts/generate-structures-index.ts"
   },
