@@ -11,7 +11,9 @@ export const getHost = () => host;
 export const getCookie = () => cookie;
 
 export async function setupApp(): Promise<void> {
-  app = await makeApp();
+  if (!app) {
+    app = await makeApp();
+  }
 
   const port = app.getHttpServer().address().port;
   host = `http://localhost:${port}/api`;
