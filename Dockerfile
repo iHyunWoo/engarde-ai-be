@@ -9,7 +9,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # ts-patch 적용
-RUN npx ts-patch install
+RUN pnpm prepare
 
 # 빌드
 COPY . .
