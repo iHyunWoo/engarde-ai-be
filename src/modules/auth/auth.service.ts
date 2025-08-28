@@ -33,7 +33,7 @@ export class AuthService {
       data: {
         email: dto.email,
         name: dto.name,
-        password_hash: hashed,
+        passwordHash: hashed,
       },
     });
 
@@ -48,7 +48,7 @@ export class AuthService {
     if (!user)
       throw new UnauthorizedException('The email or password is incorrect.');
 
-    const valid = await bcrypt.compare(dto.password, user.password_hash);
+    const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid)
       throw new UnauthorizedException('The email or password is incorrect.');
 

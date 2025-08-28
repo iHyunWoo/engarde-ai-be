@@ -28,9 +28,9 @@ export class MarkingsService {
     if (dto.myTechnique) {
       const found = await this.prisma.technique.findFirst({
         where: {
-          user_id: userId,
+          userId: userId,
           id: dto.myTechnique.id,
-          deleted_at: null
+          deletedAt: null
         }
       });
       if (!found) throw new AppError('TECHNIQUE_NOT_FOUND');
@@ -41,9 +41,9 @@ export class MarkingsService {
     if (dto.opponentTechnique) {
       const found = await this.prisma.technique.findFirst({
         where: {
-          user_id: userId,
+          userId: userId,
           id: dto.opponentTechnique.id,
-          deleted_at: null
+          deletedAt: null
         }
       });
       if (!found) throw new AppError('TECHNIQUE_NOT_FOUND');
@@ -53,19 +53,19 @@ export class MarkingsService {
 
     const created = await this.prisma.marking.create({
       data: {
-        match_id: dto.matchId,
+        matchId: dto.matchId,
         timestamp: dto.timestamp,
         result: dto.result,
-        my_technique_id: myTechniqueId,
-        opponent_technique_id: opponentTechniqueId,
+        myTechniqueId: myTechniqueId,
+        opponentTechniqueId: opponentTechniqueId,
         quality: dto.quality,
         note: dto.note,
-        remain_time: dto.remainTime,
-        user_id: userId
+        remainTime: dto.remainTime,
+        userId: userId
       },
       include: {
-        my_technique: true,
-        opponent_technique: true
+        myTechnique: true,
+        opponentTechnique: true
       }
     });
 
@@ -81,11 +81,11 @@ export class MarkingsService {
 
   async listByMatch(matchId: number) {
     const rows = await this.prisma.marking.findMany({
-      where: { match_id: matchId, deleted_at: null },
+      where: { matchId: matchId, deletedAt: null },
       orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],
       include: {
-        my_technique: true,
-        opponent_technique: true
+        myTechnique: true,
+        opponentTechnique: true
       }
     });
     return mapToMarkingResList(rows);
@@ -93,17 +93,17 @@ export class MarkingsService {
 
   async remove(id: number) {
     const exists = await this.prisma.marking.findFirst({
-      where: { id, deleted_at: null },
+      where: { id, deletedAt: null },
       select: { id: true },
     });
     if (!exists) throw new AppError('MARKING_NOT_FOUND');
 
     const updated = await this.prisma.marking.update({
       where: { id },
-      data: { deleted_at: new Date() },
+      data: { deletedAt: new Date() },
       include: {
-        my_technique: true,
-        opponent_technique: true,
+        myTechnique: true,
+        opponentTechnique: true,
       }
     });
 
