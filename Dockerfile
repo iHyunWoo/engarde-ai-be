@@ -22,12 +22,10 @@ WORKDIR /
 ENV NODE_ENV=production \
     PORT=8080
 
-RUN npm install -g pnpm
-
 # 런타임에 필요한 것만 복사
 COPY --from=builder /node_modules ./node_modules
 COPY --from=builder /dist ./dist
 COPY package.json ./
 
 EXPOSE 8080
-CMD ["pnpm", "start"]
+CMD ["node", "dist/main.js"]
