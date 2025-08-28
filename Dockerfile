@@ -3,10 +3,13 @@ FROM node:20-alpine AS builder
 WORKDIR /
 
 # pnpm 활성화
-RUN npm install -g pnpm
+RUN corepack enable && corepack prepare pnpm@9 --activate
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
+
+# ts-patch 적용
+RUN npx ts-patch install
 
 # 빌드
 COPY . .
