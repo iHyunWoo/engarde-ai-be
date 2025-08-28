@@ -8,44 +8,44 @@ import { TechniqueAttemptResponse } from '@/modules/technique-attempt/dto/techni
 
 export const mapToGetMatchListRes = (m: MatchMapperInput): GetMatchListResponse => ({
   id: m.id,
-  tournamentName: m.tournament_name,
+  tournamentName: m.tournamentName,
   opponent: m.opponent ?? undefined,
-  myScore: m.my_score,
-  opponentScore: m.opponent_score,
-  tournamentDate: m.tournament_date,
+  myScore: m.myScore,
+  opponentScore: m.opponentScore,
+  tournamentDate: m.tournamentDate,
   stage: m.stage,
 });
 
 export const mapToGetMatchRes = (m: MatchMapperInput): GetMatchResponse => ({
   id: m.id,
-  objectName: m.object_name,
-  tournamentName: m.tournament_name,
-  tournamentDate: m.tournament_date.toISOString(),
+  objectName: m.objectName,
+  tournamentName: m.tournamentName,
+  tournamentDate: m.tournamentDate.toISOString(),
   opponent: m.opponent ?? undefined,
-  myScore: m.my_score,
-  opponentScore: m.opponent_score,
+  myScore: m.myScore,
+  opponentScore: m.opponentScore,
   techniqueAttempt: m.techniqueAttempt ?? [],
-  createdAt: m.created_at.toISOString(),
+  createdAt: m.createdAt.toISOString(),
   stage: m.stage,
 });
 
 export const mapToDeleteRes = (m: Match): DeleteMatchResponse => ({
   id: m.id,
-  deletedAt: m.deleted_at?.toISOString() ?? "",
+  deletedAt: m.deletedAt?.toISOString() ?? "",
 });
 
-interface MatchMapperInput {
-  id: number
-  object_name: string
-  tournament_name: string
-  tournament_date: Date
-  opponent?: OpponentResponse | undefined
-  my_score: number
-  opponent_score: number
-  user_id: number
-  techniqueAttempt?: TechniqueAttemptResponse[]
-  stage: MatchStage
-  created_at: Date
-  updated_at: Date
-  deleted_at: Date | null
+export interface MatchMapperInput {
+  id: number;
+  objectName: string;
+  tournamentName: string;
+  tournamentDate: Date;
+  opponent?: OpponentResponse | undefined;
+  myScore: number;
+  opponentScore: number;
+  userId: number;
+  techniqueAttempt?: TechniqueAttemptResponse[];
+  stage: MatchStage;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
 }

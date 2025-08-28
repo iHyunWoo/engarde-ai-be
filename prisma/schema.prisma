@@ -32,141 +32,141 @@ enum TechniqueType {
 }
 
 model User {
-  id            Int    @id @default(autoincrement())
-  email         String @unique
-  name          String
-  password_hash String
+  id           Int    @id @default(autoincrement())
+  email        String @unique
+  name         String
+  passwordHash String @map("password_hash")
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  Match            Match[]
-  Note             Note[]
-  Marking          Marking[]
-  opponent         Opponent[]
-  Technique        Technique[]
-  TechniqueAttempt TechniqueAttempt[]
+  matches           Match[]
+  notes             Note[]
+  markings          Marking[]
+  opponents         Opponent[]
+  techniques        Technique[]
+  techniqueAttempts TechniqueAttempt[]
 }
 
 model Match {
-  id              Int      @id @default(autoincrement())
-  object_name     String   @default("")
-  tournament_name String
-  tournament_date DateTime
+  id             Int      @id @default(autoincrement())
+  objectName     String   @default("") @map("object_name")
+  tournamentName String   @map("tournament_name")
+  tournamentDate DateTime @map("tournament_date")
 
-  opponent    Opponent @relation(fields: [opponent_id], references: [id])
-  opponent_id Int
+  opponent   Opponent @relation(fields: [opponentId], references: [id])
+  opponentId Int      @map("opponent_id")
 
-  my_score       Int
-  opponent_score Int
+  myScore       Int @map("my_score")
+  opponentScore Int @map("opponent_score")
 
-  user    User @relation(fields: [user_id], references: [id])
-  user_id Int
+  user   User @relation(fields: [userId], references: [id])
+  userId Int  @map("user_id")
 
   stage MatchStage @default(preliminary)
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  Marking          Marking[]
-  TechniqueAttempt TechniqueAttempt[]
+  markings          Marking[]
+  techniqueAttempts TechniqueAttempt[]
 }
 
 model Marking {
   id        Int    @id @default(autoincrement())
-  match     Match  @relation(fields: [match_id], references: [id])
-  match_id  Int
+  match     Match  @relation(fields: [matchId], references: [id])
+  matchId   Int    @map("match_id")
   timestamp Float
   result    Result
 
-  my_technique_id       Int?
-  opponent_technique_id Int?
-  my_technique          Technique? @relation("my_technique", fields: [my_technique_id], references: [id])
-  opponent_technique    Technique? @relation("opponent_technique", fields: [opponent_technique_id], references: [id])
+  myTechniqueId       Int?       @map("my_technique_id")
+  opponentTechniqueId Int?       @map("opponent_technique_id")
+  myTechnique         Technique? @relation("my_technique", fields: [myTechniqueId], references: [id])
+  opponentTechnique   Technique? @relation("opponent_technique", fields: [opponentTechniqueId], references: [id])
 
-  quality     MarkingQuality
-  remain_time Int
+  quality    MarkingQuality
+  remainTime Int            @map("remain_time")
 
   note String
 
-  user_id Int
-  user    User @relation(fields: [user_id], references: [id])
+  userId Int  @map("user_id")
+  user   User @relation(fields: [userId], references: [id])
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 }
 
 model Note {
   id Int @id @default(autoincrement())
 
-  user_id Int
-  user    User @relation(fields: [user_id], references: [id])
+  userId Int  @map("user_id")
+  user   User @relation(fields: [userId], references: [id])
 
-  text         String    @db.Citext // 대소문자 구분 X
-  last_used_at DateTime  @default(now())
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-  deleted_at   DateTime?
+  text       String    @db.Citext
+  lastUsedAt DateTime  @default(now()) @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
 
-  @@unique([user_id, text]) // 같은 유저의 동일 텍스트 중복 방지
+  @@unique([userId, text])
 }
 
 model Opponent {
-  id      Int  @id @default(autoincrement())
-  user    User @relation(fields: [user_id], references: [id])
-  user_id Int
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int  @map("user_id")
 
   name String
   team String
 
-  last_used_at DateTime  @default(now())
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
-  deleted_at   DateTime?
+  lastUsedAt DateTime  @default(now()) @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
 
   matches Match[]
 }
 
 model Technique {
-  id        Int    @id @default(autoincrement())
-  name      String
-  parent_id Int?
+  id       Int    @id @default(autoincrement())
+  name     String
+  parentId Int?   @map("parent_id")
 
-  parent   Technique?  @relation("technique_parent", fields: [parent_id], references: [id])
+  parent   Technique?  @relation("technique_parent", fields: [parentId], references: [id])
   children Technique[] @relation("technique_parent")
 
-  user    User @relation(fields: [user_id], references: [id])
-  user_id Int
+  user   User @relation(fields: [userId], references: [id])
+  userId Int  @map("user_id")
 
   type TechniqueType
 
-  last_used_at DateTime  @default(now())
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @default(now()) @updatedAt
-  deleted_at   DateTime?
+  lastUsedAt DateTime  @default(now()) @map("last_used_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
 
-  marking_my_technique       Marking[]          @relation("my_technique")
-  marking_opponent_technique Marking[]          @relation("opponent_technique")
-  TechniqueAttempt           TechniqueAttempt[]
+  markingMyTechnique       Marking[]          @relation("my_technique")
+  markingOpponentTechnique Marking[]          @relation("opponent_technique")
+  techniqueAttempts        TechniqueAttempt[]
 }
 
 model TechniqueAttempt {
-  id      Int  @id @default(autoincrement())
-  user    User @relation(fields: [user_id], references: [id])
-  user_id Int
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int  @map("user_id")
 
-  technique    Technique @relation(fields: [technique_id], references: [id])
-  technique_id Int
+  technique   Technique @relation(fields: [techniqueId], references: [id])
+  techniqueId Int       @map("technique_id")
 
-  match    Match? @relation(fields: [match_id], references: [id])
-  match_id Int?
+  match   Match? @relation(fields: [matchId], references: [id])
+  matchId Int?   @map("match_id")
 
-  attempt_count Int @default(0)
+  attemptCount Int @default(0) @map("attempt_count")
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 }
