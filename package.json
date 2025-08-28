@@ -22,7 +22,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "sdk": "npx nestia sdk && ts-node scripts/generate-structures-index.ts",
-    "prepare": "ts-patch install && typia patch"
+    "prepare": "typia patch"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
@@ -70,10 +70,10 @@
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
-    "ts-patch": "^3.3.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "~5.9.2",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "ts-patch": "^3.3.0"
   },
   "jest": {
     "moduleFileExtensions": [
