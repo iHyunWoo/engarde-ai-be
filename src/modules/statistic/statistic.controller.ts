@@ -32,11 +32,13 @@ export class StatisticController {
     )
     const matchIds = matches.map(match => match.id)
 
+    const opponentStats = await this.statisticService.getStatisticsByOpponent(userId, matches)
     const winRate = await this.statisticService.getWinRateByTechnique(userId, matchIds)
     const lossCount = await this.statisticService.getLossTypes(userId, matchIds)
 
     const result: GetStatisticResponse = {
       matchCount: matchIds.length,
+      opponentStats,
       winRate,
       lossCount
     }

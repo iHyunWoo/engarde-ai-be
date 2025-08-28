@@ -72,4 +72,31 @@ export class TechniqueAttemptService {
       },
     })
   }
+
+  async delete(
+    userId: number,
+    techniqueAttemptId: number,
+  ) {
+    const attempt = await this.prisma.techniqueAttempt.findFirst({
+      where: {
+        id: techniqueAttemptId,
+        user_id: userId,
+        deleted_at: null
+      }
+    })
+
+    if (!attempt) throw new AppError('TECHNIQUE_ATTEMPT_NOT_FOUND')
+
+    return await this.prisma.techniqueAttempt.update({
+      where: {
+        id: techniqueAttemptId
+      },
+      data: {
+        deleted_at: new Date()
+      },
+      select: {
+        id: true,
+      },
+    })
+  }
 }

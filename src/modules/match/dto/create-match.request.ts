@@ -1,4 +1,5 @@
 import { IsDateString, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { MatchStage as MatchStage } from '@prisma/client';
 
 export class CreateMatchRequest {
   @IsNotEmpty()
@@ -27,4 +28,8 @@ export class CreateMatchRequest {
   @IsNotEmpty()
   @IsNumber()
   opponentScore: number;
+
+  @IsNotEmpty()
+  @IsString()
+  stage: MatchStage;
 }

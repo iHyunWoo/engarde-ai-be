@@ -14,15 +14,10 @@ enum Result {
   attempt
 }
 
-// enum MarkingType {
-//   none
-//   lunge
-//   advanced_lunge
-//   fleche
-//   push
-//   parry
-//   counter_attack
-// }
+enum MatchStage {
+  preliminary
+  main
+}
 
 enum MarkingQuality {
   good
@@ -68,6 +63,8 @@ model Match {
 
   user    User @relation(fields: [user_id], references: [id])
   user_id Int
+
+  stage MatchStage @default(preliminary)
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt

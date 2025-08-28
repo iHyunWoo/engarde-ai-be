@@ -5,10 +5,14 @@ import { CursorResponse } from '@/shared/dto/cursor-response';
 import { UpsertTechniqueRequest } from '@/modules/technique/dto/upsert-technique.request';
 import { AppError } from '@/shared/error/app-error';
 import { DEFAULT_TECHNIQUES } from '@/modules/technique/lib/default-techniques';
+import { TechniqueAttemptService } from '@/modules/technique-attempt/technique-attempt.service';
 
 @Injectable()
 export class TechniqueService {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly techniqueAttemptService: TechniqueAttemptService
+  ) {
   }
 
   TECHNIQUE_MAX_COUNT = 30;
@@ -142,14 +146,40 @@ export class TechniqueService {
     })
 
     if (!technique) throw new AppError('TECHNIQUE_NOT_FOUND')
-    return await this.prisma.technique.update({
-      where: {
-        id: techniqueId
-      },
-      data: {
-        deleted_at: new Date()
-      }
-    })
+
+    // 자식들의 id 조회
+    const allTechniqueIds = await this.getAllSubTechniqueIds(userId, techniqueId);
+
+    const now = new Date();
+
+    await this.prisma.$transaction([
+      // technique soft delete
+      this.prisma.technique.updateMany({
+        where: {
+          id: { in: allTechniqueIds },
+        },
+        data: {
+          deleted_at: now,
+        },
+      }),
+      // technique attempt 에서 참조되는 attempt delete
+      this.prisma.techniqueAttempt.updateMany({
+        where: {
+          technique_id: { in: allTechniqueIds },
+          deleted_at: null,
+        },
+        data: {
+          deleted_at: now,
+        },
+      }),
+    ]);
+
+    return {
+      id: technique.id,
+      name: technique.name,
+      type: technique.type,
+      children: []
+    };
   }
 
   async create(userId: number, dto: UpsertTechniqueRequest): Promise<TechniqueResponse> {
@@ -190,6 +220,30 @@ export class TechniqueService {
         parent_id: null
       })),
     });
+  }
+
+  private async getAllSubTechniqueIds(userId: number, rootId: number): Promise<number[]> {
+    const result: number[] = [rootId];
+    const stack: number[] = [rootId];
+
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      const children = await this.prisma.technique.findMany({
+        where: {
+          user_id: userId,
+          parent_id: current,
+          deleted_at: null,
+        },
+        select: { id: true },
+      });
+
+      for (const child of children) {
+        result.push(child.id);
+        stack.push(child.id);
+      }
+    }
+
+    return result;
   }
 
 }

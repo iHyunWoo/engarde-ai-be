@@ -1,4 +1,5 @@
 import { OpponentResponse } from '@/modules/opponent/dto/opponent.response';
+import { MatchStage as MatchStage } from '@prisma/client';
 
 export class GetMatchListResponse {
   id: number;
@@ -7,4 +8,5 @@ export class GetMatchListResponse {
   myScore: number;
   opponentScore: number;
   tournamentDate: Date;
+  stage: MatchStage;
 }
