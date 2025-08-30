@@ -7,10 +7,35 @@ import {
 } from '@/modules/statistic/dto/get-statistic.response';
 import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.response';
 import { MatchStage as MatchStage } from '@prisma/client';
+import { StatisticSummary, TechniquesByMatch } from '@/modules/statistic/dto/get-statistics-v2.response';
 
 @Injectable()
 export class StatisticService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getSummary(
+    userId: number,
+    matchIds: number[],
+  ): Promise<StatisticSummary> {
+    return await this.getTopTechniques(userId, matchIds, 30)
+  }
+
+  async getTechniquesByMatch(
+    userId: number,
+    matches: GetMatchListResponse[]
+  ): Promise<TechniquesByMatch[]> {
+    const result: TechniquesByMatch[] = []
+
+    for (const match of matches) {
+      const summary = await this.getTopTechniques(userId, [match.id], 30)
+      result.push({
+        match: match,
+        summary: summary
+      })
+    }
+
+    return result
+  }
 
   async getStatisticsByOpponent(userId: number, matches: GetMatchListResponse[]): Promise<OpponentStat[]> {
     const grouped = this.groupMatchesByOpponent(matches);
@@ -250,7 +275,7 @@ export class StatisticService {
   }
 
   // 경기들의 승패 시 각각 최대 승리 본인 기술, 최대 패배 상대 기술
-  private async getTopTechniques(userId: number, matchIds: number[]) {
+  private async getTopTechniques(userId: number, matchIds: number[], take: number = 3) {
     const markings = await this.prisma.marking.findMany({
       where: {
         matchId: { in: matchIds },
@@ -260,16 +285,16 @@ export class StatisticService {
       select: {
         result: true,
         myTechnique: {
-          select: { id: true, name: true, deletedAt: true },
+          select: { id: true, name: true, parentId: true, deletedAt: true },
         },
         opponentTechnique: {
-          select: { id: true, name: true, deletedAt: true },
+          select: { id: true, name: true, parentId: true, deletedAt: true },
         },
       },
     });
 
-    const winCounts: Record<number, { name: string; count: number }> = {};
-    const loseCounts: Record<number, { name: string; count: number }> = {};
+    const winCounts: Record<number, { name: string; count: number, isMainTechnique: boolean }> = {};
+    const loseCounts: Record<number, { name: string; count: number, isMainTechnique: boolean }> = {};
     for (const m of markings) {
       if (m.result === 'win' && m.myTechnique && m.myTechnique.deletedAt === null) {
         const id = m.myTechnique.id;
@@ -277,6 +302,7 @@ export class StatisticService {
         winCounts[id] = {
           name,
           count: (winCounts[id]?.count || 0) + 1,
+          isMainTechnique: m.myTechnique.parentId === null
         };
       }
 
@@ -286,19 +312,20 @@ export class StatisticService {
         loseCounts[id] = {
           name,
           count: (loseCounts[id]?.count || 0) + 1,
+          isMainTechnique: m.opponentTechnique.parentId === null
         };
       }
     }
 
     const topWins = Object.entries(winCounts)
-      .map(([id, { name, count }]) => ({ id: +id, name, count }))
+      .map(([id, { name, count, isMainTechnique }]) => ({ id: +id, name, count, isMainTechnique }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 3);
+      .slice(0, take);
 
     const topLoses = Object.entries(loseCounts)
-      .map(([id, { name, count }]) => ({ id: +id, name, count }))
+      .map(([id, { name, count, isMainTechnique }]) => ({ id: +id, name, count, isMainTechnique }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 3);
+      .slice(0, take);
 
     return {
       win: topWins,
