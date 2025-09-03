@@ -17,12 +17,14 @@ export interface WinRateByTechniqueDto {
   attemptCount: number;
   winCount: number;
   topNotes: TopNotesDTO[];
+  isMainTechnique: boolean;
 }
 
 export interface LossCountByTechniqueDto {
   name: string;
   count: number;
   topNotes: TopNotesDTO[];
+  isMainTechnique: boolean;
 }
 
 export type WinRateStatisticsResponse = Record<number, WinRateByTechniqueDto>;

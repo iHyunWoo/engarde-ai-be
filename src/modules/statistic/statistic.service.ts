@@ -105,8 +105,10 @@ export class StatisticService {
         attemptCount: 0,
         winCount: 0,
         topNotes: [],
+        isMainTechnique: false
       };
       existing.attemptCount += attempt.attemptCount;
+      existing.isMainTechnique = attempt.technique.parentId === null
       statsMap.set(id, existing);
     }
 
@@ -121,8 +123,10 @@ export class StatisticService {
         attemptCount: 0,
         winCount: 0,
         topNotes: [],
+        isMainTechnique: false
       };
       existing.winCount += 1;
+      existing.isMainTechnique = marking.myTechnique?.parentId === null
       statsMap.set(id, existing);
     }
 
@@ -136,6 +140,7 @@ export class StatisticService {
         attemptCount: data.attemptCount,
         winCount: data.winCount,
         topNotes: topNotesMap[id] ?? [],
+        isMainTechnique: data.isMainTechnique
       };
     }
 
@@ -159,16 +164,17 @@ export class StatisticService {
       },
     });
 
-    const statsMap = new Map<number, { name: string; count: number }>();
-
+    const statsMap = new Map<number, { name: string; count: number, isMainTechnique: boolean }>();
+    console.log(lossMarkings);
     // 기술별 횟수 집계
     for (const marking of lossMarkings) {
       const technique = marking.opponentTechnique;
       if (!technique) continue;
 
       const { id, name } = technique;
-      const existing = statsMap.get(id) ?? { name, count: 0 };
+      const existing = statsMap.get(id) ?? { name, count: 0, isMainTechnique: false };
       existing.count += 1;
+      existing.isMainTechnique = marking.opponentTechnique?.parentId === null
       statsMap.set(id, existing);
     }
 
@@ -182,6 +188,7 @@ export class StatisticService {
         name: data.name,
         count: data.count,
         topNotes: topNotes[id] ?? [],
+        isMainTechnique: data.isMainTechnique
       };
     }
 
