@@ -165,7 +165,6 @@ export class StatisticService {
     });
 
     const statsMap = new Map<number, { name: string; count: number, isMainTechnique: boolean }>();
-    console.log(lossMarkings);
     // 기술별 횟수 집계
     for (const marking of lossMarkings) {
       const technique = marking.opponentTechnique;
