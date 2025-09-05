@@ -10,11 +10,17 @@ import { BaseResponse } from '@/shared/dto/base-response.dto';
 import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request';
 import { TypedBody, TypedParam, TypedQuery, TypedRoute } from '@nestia/core';
 import { GetMatchByOpponentQuery } from '@/modules/match/dto/get-match-by-opponent.query';
+import type { VideoMergeRequest } from '@/modules/match/dto/video-merge.request';
+import { FileService } from '@/modules/file/file.service';
+import { PostSignedUrlRequestDto } from '@/modules/file/dto/post-signed-url.request';
 
 @Authenticated()
 @Controller('matches')
 export class MatchController {
-  constructor(private readonly matchService: MatchService) {}
+  constructor(
+    private readonly matchService: MatchService,
+    private readonly fileService: FileService,
+  ) {}
 
   @TypedRoute.Get('opponent')
   async getMatchByOpponent(
@@ -75,5 +81,25 @@ export class MatchController {
   ) {
     await this.matchService.delete(user.userId, id);
     return  new BaseResponse(200, '삭제 성공');
+  }
+
+  @TypedRoute.Post(':id/videos/upload')
+  async postWriteSignedUrl(
+    @User() user: JwtPayload,
+    @TypedParam('id') id: number,
+    @TypedBody() dto: PostSignedUrlRequestDto[],
+  ) {
+    const result = await this.fileService.issueWriteSignedUrlsByMatch(id, dto)
+    return new BaseResponse(200, '발급 성공', result)
+  }
+
+  @TypedRoute.Post(':id/videos')
+  async requestVideoMerge(
+    @User() user: JwtPayload,
+    @TypedParam('id') id: number,
+    @TypedBody() dto: VideoMergeRequest,
+  ) {
+    await this.matchService.requestVideoMerge(user.userId, id, dto.objectNames)
+    return new BaseResponse(200, '요청 성공')
   }
 }

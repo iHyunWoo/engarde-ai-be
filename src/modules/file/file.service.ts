@@ -7,6 +7,7 @@ import { sanitize } from '@/modules/file/lib/sanitize';
 import { prefixByMime } from '@/modules/file/lib/prefix-by-mime';
 import { AppError } from '@/shared/error/app-error';
 import { GetSignedUrlResponse } from '@/modules/file/dto/get-signed-url.response';
+import { PostSignedUrlRequestDto } from '@/modules/file/dto/post-signed-url.request';
 
 @Injectable()
 export class FileService {
@@ -52,5 +53,34 @@ export class FileService {
       .file(objectName)
       .getSignedUrl({ version: 'v4', action: 'read', expires });
     return { url, expiresAt: expires };
+  }
+
+  async issueWriteSignedUrlsByMatch(
+    matchId: number,
+    dto: PostSignedUrlRequestDto[]
+  ): Promise<PostSignedUrlResponse[]> {
+    if (!this.bucketName) {
+      throw new AppError('SERVER_ERROR');
+    }
+
+    return await Promise.all(
+      dto.map(async ({ contentType, fileName }) => {
+        const prefix = prefixByMime(contentType);
+        const safe = sanitize(fileName);
+        const objectName = `${prefix}/match-${matchId}/${randomUUID()}_${safe}`;
+
+        const [uploadUrl] = await this.storage
+          .bucket(this.bucketName)
+          .file(objectName)
+          .getSignedUrl({
+            version: 'v4',
+            action: 'write',
+            contentType,
+            expires: Date.now() + this.expiresSec * 1000,
+          });
+
+        return { uploadUrl, objectName };
+      })
+    );
   }
 }
