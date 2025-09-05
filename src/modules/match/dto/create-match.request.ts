@@ -1,10 +1,10 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { MatchStage as MatchStage } from '@prisma/client';
 
 export class CreateMatchRequest {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  objectName: string;
+  objectName?: string;
 
   @IsNotEmpty()
   @IsString()

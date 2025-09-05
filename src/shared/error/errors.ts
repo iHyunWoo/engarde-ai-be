@@ -2,6 +2,7 @@ export type ErrorKey =
   // AUTH
   | 'TOKEN_MISSING'
   | 'TOKEN_EXPIRED'
+  | 'API_KEY_MISMATCH'
 
   // FILE
   | 'FILE_CONTENT_TYPE_MISSING'
@@ -33,6 +34,7 @@ export const ERRORS: Record<ErrorKey, { code: number; message: string }> = {
   // AUTH
   TOKEN_MISSING:   { code: 401, message: 'TOKEN_MISSING' },
   TOKEN_EXPIRED:   { code: 401, message: 'TOKEN_EXPIRED' },
+  API_KEY_MISMATCH:   { code: 403, message: 'API_KEY_MISMATCH' },
 
   //FILE
   FILE_CONTENT_TYPE_MISSING: {code: 400, message: 'Content Type is required'},

@@ -1,0 +1,21 @@
+{
+  "name": "video-merge-job",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
+    "axios": "^1.6.8",
+    "dotenv": "^17.2.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.3.3"
+  }
+}

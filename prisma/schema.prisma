@@ -41,6 +41,7 @@ model Match {
   opponent          Opponent           @relation(fields: [opponentId], references: [id], map: "Match_opponent_id_fkey")
   user              User               @relation(fields: [userId], references: [id], map: "Match_user_id_fkey")
   techniqueAttempts TechniqueAttempt[]
+  status            UploadStatus       @default(completed)
 }
 
 model Marking {
@@ -142,4 +143,10 @@ enum TechniqueType {
   attack
   defense
   etc
+}
+
+enum UploadStatus {
+  pending
+  completed
+  failed
 }
