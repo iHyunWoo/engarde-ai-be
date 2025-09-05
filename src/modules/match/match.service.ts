@@ -13,12 +13,14 @@ import { DeleteMatchResponse } from '@/modules/match/dto/delete-match.response';
 import { GetMatchResponse } from '@/modules/match/dto/get-match.response';
 import { AppError } from '@/shared/error/app-error';
 import { OpponentService } from '@/modules/opponent/opponent.service';
+import { CloudRunService } from '@/modules/cloud-run/cloud-run.service';
 
 @Injectable()
 export class MatchService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly opponentService: OpponentService
+    private readonly opponentService: OpponentService,
+    private readonly cloudRunService: CloudRunService,
   ) {}
 
   async create(
@@ -35,7 +37,7 @@ export class MatchService {
     const match = await this.prisma.match.create({
       data: {
         userId,
-        objectName: dto.objectName ?? null,
+        objectName: dto.objectName ?? undefined,
         tournamentName: dto.tournamentName,
         tournamentDate: new Date(dto.tournamentDate),
         opponentId: opponent.id,
@@ -231,4 +233,66 @@ export class MatchService {
 
     return matches.map(mapToGetMatchListRes);
   }
+
+  async requestVideoMerge(
+    userId: number,
+    matchId: number,
+    objectNames: string[],
+  ) {
+    // match 존재 여부 확인
+    const match = await this.prisma.match.findUnique({
+      where: {
+        id: matchId,
+        userId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (!match) throw new AppError('MATCH_NOT_FOUND');
+
+    // pending
+    await this.prisma.match.update({
+      where: {
+        id: matchId,
+      },
+      data: {
+        status: 'pending'
+      }
+    })
+
+    // Cloud Run Job 트리거
+    await this.cloudRunService.triggerVideoMergeJob(matchId, objectNames);
+  }
+
+  async videoMergeDone(
+    matchId: number,
+    objectName: string,
+  ) {
+    return await this.prisma.match.update({
+      where: {
+        id: matchId,
+        deletedAt: null
+      },
+      data: {
+        objectName: objectName,
+        status: 'completed'
+      }
+    })
+  }
+
+  async videoMergeFailed(
+    matchId: number,
+  ) {
+    return await this.prisma.match.update({
+      where: {
+        id: matchId,
+        deletedAt: null
+      },
+      data: {
+        status: 'failed'
+      }
+    })
+  }
+
+
 }
