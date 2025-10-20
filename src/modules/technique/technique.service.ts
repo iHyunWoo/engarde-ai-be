@@ -105,7 +105,6 @@ export class TechniqueService {
         userId: userId,
         deletedAt: null,
         name: dto.name,
-        type: dto.type,
         NOT: { id: techniqueId },
       }
     });
@@ -118,7 +117,6 @@ export class TechniqueService {
       },
       data: {
         name: dto.name,
-        type: dto.type,
         parentId: dto.parentId,
         lastUsedAt: new Date()
       }
@@ -177,7 +175,6 @@ export class TechniqueService {
     return {
       id: technique.id,
       name: technique.name,
-      type: technique.type,
       children: []
     };
   }
@@ -195,7 +192,6 @@ export class TechniqueService {
         userId: userId,
         deletedAt: null,
         name: dto.name,
-        type: dto.type,
       }
     });
 
@@ -206,7 +202,6 @@ export class TechniqueService {
       data: {
         userId: userId,
         name: dto.name,
-        type: dto.type,
         parentId: dto.parentId,
       }
     })
@@ -215,7 +210,7 @@ export class TechniqueService {
   async setDefaultTechnique(userId: number) {
     await this.prisma.technique.createMany({
       data: DEFAULT_TECHNIQUES.map((technique) => ({
-        ...technique,
+        name: technique,
         userId: userId,
         parentId: null
       })),

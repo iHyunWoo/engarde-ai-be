@@ -93,13 +93,13 @@ export class MatchController {
     return new BaseResponse(200, '발급 성공', result)
   }
 
-  @TypedRoute.Post(':id/videos')
-  async requestVideoMerge(
-    @User() user: JwtPayload,
-    @TypedParam('id') id: number,
-    @TypedBody() dto: VideoMergeRequest,
-  ) {
-    await this.matchService.requestVideoMerge(user.userId, id, dto.objectNames)
-    return new BaseResponse(200, '요청 성공')
-  }
+  // @TypedRoute.Post(':id/videos')
+  // async requestVideoMerge(
+  //   @User() user: JwtPayload,
+  //   @TypedParam('id') id: number,
+  //   @TypedBody() dto: VideoMergeRequest,
+  // ) {
+  //   await this.matchService.requestVideoMerge(user.userId, id, dto.objectNames)
+  //   return new BaseResponse(200, '요청 성공')
+  // }
 }

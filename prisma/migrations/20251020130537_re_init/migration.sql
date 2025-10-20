@@ -1,14 +1,11 @@
 -- CreateEnum
-CREATE TYPE "public"."Result" AS ENUM ('win', 'lose', 'attempt');
+CREATE TYPE "public"."Result" AS ENUM ('win', 'lose', 'attempt', 'setEnded');
 
 -- CreateEnum
 CREATE TYPE "public"."MatchStage" AS ENUM ('preliminary', 'main');
 
 -- CreateEnum
 CREATE TYPE "public"."MarkingQuality" AS ENUM ('good', 'bad', 'lucky');
-
--- CreateEnum
-CREATE TYPE "public"."TechniqueType" AS ENUM ('attack', 'defense', 'etc');
 
 -- CreateTable
 CREATE TABLE "public"."User" (
@@ -67,7 +64,7 @@ CREATE TABLE "public"."Note" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "lastUsedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "text" CITEXT NOT NULL,
+    "text" TEXT NOT NULL,
     "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Note_pkey" PRIMARY KEY ("id")
@@ -96,7 +93,6 @@ CREATE TABLE "public"."Technique" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "deletedAt" TIMESTAMP(3),
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "type" "public"."TechniqueType" NOT NULL,
     "lastUsedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Technique_pkey" PRIMARY KEY ("id")

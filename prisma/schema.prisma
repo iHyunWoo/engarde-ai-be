@@ -41,7 +41,6 @@ model Match {
   opponent          Opponent           @relation(fields: [opponentId], references: [id], map: "Match_opponent_id_fkey")
   user              User               @relation(fields: [userId], references: [id], map: "Match_user_id_fkey")
   techniqueAttempts TechniqueAttempt[]
-  status            UploadStatus       @default(completed)
 }
 
 model Marking {
@@ -70,7 +69,7 @@ model Note {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   lastUsedAt DateTime  @default(now())
-  text       String    @db.Citext
+  text       String    
   deletedAt  DateTime?
   user       User      @relation(fields: [userId], references: [id], map: "Note_user_id_fkey")
 
@@ -98,7 +97,6 @@ model Technique {
   createdAt                DateTime           @default(now())
   deletedAt                DateTime?
   updatedAt                DateTime           @default(now()) @updatedAt
-  type                     TechniqueType
   lastUsedAt               DateTime           @default(now())
   markingMyTechnique       Marking[]          @relation("my_technique")
   markingOpponentTechnique Marking[]          @relation("opponent_technique")
@@ -126,6 +124,7 @@ enum Result {
   win
   lose
   attempt
+  setEnded
 }
 
 enum MatchStage {
@@ -137,16 +136,4 @@ enum MarkingQuality {
   good
   bad
   lucky
-}
-
-enum TechniqueType {
-  attack
-  defense
-  etc
-}
-
-enum UploadStatus {
-  pending
-  completed
-  failed
 }
