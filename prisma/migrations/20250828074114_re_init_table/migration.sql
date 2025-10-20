@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS citext;
 -- CreateEnum
 CREATE TYPE "public"."Result" AS ENUM ('win', 'lose', 'attempt');
 
