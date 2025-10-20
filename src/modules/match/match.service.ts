@@ -234,65 +234,65 @@ export class MatchService {
     return matches.map(mapToGetMatchListRes);
   }
 
-  async requestVideoMerge(
-    userId: number,
-    matchId: number,
-    objectNames: string[],
-  ) {
-    // match 존재 여부 확인
-    const match = await this.prisma.match.findUnique({
-      where: {
-        id: matchId,
-        userId,
-        deletedAt: null,
-      },
-      select: { id: true },
-    });
-    if (!match) throw new AppError('MATCH_NOT_FOUND');
+  // async requestVideoMerge(
+  //   userId: number,
+  //   matchId: number,
+  //   objectNames: string[],
+  // ) {
+  //   // match 존재 여부 확인
+  //   const match = await this.prisma.match.findUnique({
+  //     where: {
+  //       id: matchId,
+  //       userId,
+  //       deletedAt: null,
+  //     },
+  //     select: { id: true },
+  //   });
+  //   if (!match) throw new AppError('MATCH_NOT_FOUND');
 
-    // pending
-    await this.prisma.match.update({
-      where: {
-        id: matchId,
-      },
-      data: {
-        status: 'pending'
-      }
-    })
+  //   // pending
+  //   await this.prisma.match.update({
+  //     where: {
+  //       id: matchId,
+  //     },
+  //     data: {
+  //       status: 'pending'
+  //     }
+  //   })
 
-    // Cloud Run Job 트리거
-    await this.cloudRunService.triggerVideoMergeJob(matchId, objectNames);
-  }
+  //   // Cloud Run Job 트리거
+  //   await this.cloudRunService.triggerVideoMergeJob(matchId, objectNames);
+  // }
 
-  async videoMergeDone(
-    matchId: number,
-    objectName: string,
-  ) {
-    return await this.prisma.match.update({
-      where: {
-        id: matchId,
-        deletedAt: null
-      },
-      data: {
-        objectName: objectName,
-        status: 'completed'
-      }
-    })
-  }
+  // async videoMergeDone(
+  //   matchId: number,
+  //   objectName: string,
+  // ) {
+  //   return await this.prisma.match.update({
+  //     where: {
+  //       id: matchId,
+  //       deletedAt: null
+  //     },
+  //     data: {
+  //       objectName: objectName,
+  //       status: 'completed'
+  //     }
+  //   })
+  // }
 
-  async videoMergeFailed(
-    matchId: number,
-  ) {
-    return await this.prisma.match.update({
-      where: {
-        id: matchId,
-        deletedAt: null
-      },
-      data: {
-        status: 'failed'
-      }
-    })
-  }
+  // async videoMergeFailed(
+  //   matchId: number,
+  // ) {
+  //   return await this.prisma.match.update({
+  //     where: {
+  //       id: matchId,
+  //       deletedAt: null
+  //     },
+  //     data: {
+  //       status: 'failed'
+  //     }
+  //   })
+  // }
 
 
 }
