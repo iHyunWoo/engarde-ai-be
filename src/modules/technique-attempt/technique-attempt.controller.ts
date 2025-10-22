@@ -44,4 +44,13 @@ export class TechniqueAttemptController {
   const result = await this.techniqueAttemptService.updateAttempt(user.userId, id, dto)
   return new BaseResponse(200, '변경 성공', result)
   }
+
+  @TypedRoute.Delete(":id")
+  async deleteAttempt(
+    @User() user: JwtPayload,
+    @TypedParam('id') id: number,
+  ) {
+    const result = await this.techniqueAttemptService.delete(user.userId, id)
+    return new BaseResponse(200, '삭제 성공', result)
+  }
 }

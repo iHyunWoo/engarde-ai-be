@@ -12,6 +12,20 @@ export class TechniqueAttemptService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: number, dto: CreateTechniqueAttemptRequest): Promise<TechniqueAttemptResponse> {
+    // 이미 해당 매치에 같은 기술 시도가 있는지 확인
+    const existingAttempt = await this.prisma.techniqueAttempt.findFirst({
+      where: {
+        userId: userId,
+        techniqueId: dto.techniqueId,
+        matchId: dto.matchId,
+        deletedAt: null,
+      },
+    });
+
+    if (existingAttempt) {
+      throw new AppError('TECHNIQUE_ATTEMPT_ALREADY_EXISTS');
+    }
+
     const attempt = await this.prisma.techniqueAttempt.create({
       data: {
         userId: userId,
