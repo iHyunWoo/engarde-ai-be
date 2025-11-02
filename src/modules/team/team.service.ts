@@ -324,7 +324,7 @@ export class TeamService {
     });
   }
 
-  async generateInviteCode(teamId: number, userId: number, expiresAt?: string) {
+  async generateInviteCode(teamId: number, userId: number, expiresInDays?: number) {
     // 팀 존재 확인
     const team = await this.prisma.team.findUnique({
       where: { id: teamId },
@@ -352,11 +352,16 @@ export class TeamService {
     // 새로운 초대코드 생성
     const newInviteCode = this.generateRandomCode();
     
+    // 만료일 계산 (기본값 7일)
+    const days = expiresInDays ?? 7;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + days);
+    
     await this.prisma.team.update({
       where: { id: teamId },
       data: { 
         inviteCode: newInviteCode,
-        inviteCodeExpiresAt: expiresAt ? new Date(expiresAt) : null,
+        inviteCodeExpiresAt: expiresAt,
       },
     });
 
@@ -407,15 +412,6 @@ export class TeamService {
 
     const students = await this.prisma.user.findMany({
       where,
-      include: {
-        team: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-          },
-        },
-      },
       orderBy: { id: 'desc' },
       take: take + 1,
       ...(cursor && {

@@ -13,6 +13,7 @@ import { TechniqueAttemptModule } from '@/modules/technique-attempt/technique-at
 import { TeamModule } from '@/modules/team/team.module';
 import { UserModule } from '@/modules/user/user.module';
 import { AdminModule } from '@/modules/admin/admin.module';
+import { CoachModule } from '@/modules/coach/coach.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AdminModule } from '@/modules/admin/admin.module';
     TeamModule,
     UserModule,
     AdminModule,
+    CoachModule,
   ],
 })
 export class AppModule {}

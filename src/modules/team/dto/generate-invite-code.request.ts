@@ -1,7 +1,10 @@
-import { IsOptional, IsDateString } from 'class-validator';
+import { IsOptional, IsInt, Min, Max } from 'class-validator';
 
 export class GenerateInviteCodeRequest {
+  @IsInt()
   @IsOptional()
-  @IsDateString()
-  expiresAt?: string;
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  expiresAt?: number = 7;
 }

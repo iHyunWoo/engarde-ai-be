@@ -19,19 +19,16 @@ export function mapToMarkingRes(row: MarkingMapperInput): MarkingResponse {
   };
 }
 
-export function mapToMarkingResList(rows: MarkingMapperInput[]): MarkingResponse[] {
-  return rows.map(mapToMarkingRes);
+interface MarkingMapperInput {
+  id: number;
+  matchId: number;
+  timestamp: number;
+  result: MarkingResult;
+  myTechnique: TechniqueResponse | null;
+  opponentTechnique: TechniqueResponse | null;
+  quality: MarkingQuality;
+  remainTime: number;
+  note: string;
+  coachNote: string;
 }
 
-interface MarkingMapperInput{
-  id: number
-  matchId: number
-  timestamp: number
-  result: MarkingResult
-  myTechnique: TechniqueResponse | null
-  opponentTechnique: TechniqueResponse | null
-  quality: MarkingQuality
-  remainTime: number
-  note: string
-  coachNote: string
-}
