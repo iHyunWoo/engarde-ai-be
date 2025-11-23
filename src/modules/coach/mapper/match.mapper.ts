@@ -25,10 +25,12 @@ export const mapToGetMatchRes = (m: MatchMapperInput): GetMatchResponse => ({
   techniqueAttempt: m.techniqueAttempt ?? [],
   createdAt: m.createdAt.toISOString(),
   stage: m.stage,
+  coachFeedback: m.coachFeedback,
 });
 
 export interface MatchMapperInput {
   id: number;
+  coachFeedback: string;
   objectName: string;
   tournamentName: string;
   tournamentDate: Date;

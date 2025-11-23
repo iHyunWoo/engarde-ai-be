@@ -28,9 +28,10 @@ export class MarkingsController {
 
   @TypedRoute.Get()
   async list(
+    @User() user: JwtPayload,
     @TypedQuery() query: GetMarkingListQuery
   ) {
-    const result = await this.markingsService.listByMatch(query.matchId);
+    const result = await this.markingsService.listByMatch(user.userId, Number(query.matchId));
     return new BaseResponse(200, '조회 성공', result);
   }
 
