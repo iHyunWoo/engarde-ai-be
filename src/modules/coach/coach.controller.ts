@@ -15,6 +15,7 @@ import { RolesGuard } from '@/shared/guards/roles.guard';
 import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request';
 import { UpdateMatchFeedbackRequest } from '@/modules/match/dto/update-match-feedback.request';
 import { UpdateMarkingCoachNoteRequest } from '@/modules/marking/dto/update-marking-coach-note.request';
+import type { GetStatisticsV2Request } from '@/modules/statistic/dto/get-statistics-v2.request';
 
 @Authenticated()
 @Controller('coaches')
@@ -90,6 +91,26 @@ export class CoachController {
       dto.coachNote || '',
     );
     return new BaseResponse(HttpStatus.OK, '마킹 노트 작성 성공', result);
+  }
+
+  @TypedRoute.Get('users/:userId/statistics')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @RequireRoles('COACH')
+  async getUserStatistics(
+    @User() user: JwtPayload,
+    @TypedParam('userId') userId: string,
+    @TypedQuery() query: GetStatisticsV2Request,
+  ) {
+    const { from, to, mode } = query;
+    const result = await this.coachService.getUserStatistics(
+      user.userId,
+      Number(userId),
+      new Date(from),
+      new Date(to),
+      mode,
+    );
+    return new BaseResponse(HttpStatus.OK, '유저 통계 조회 성공', result);
   }
 }
 

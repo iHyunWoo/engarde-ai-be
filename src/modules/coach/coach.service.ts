@@ -7,11 +7,17 @@ import { CursorResponse } from '@/shared/dto/cursor-response';
 import { MarkingResponse } from '@/modules/marking/dto/marking.response';
 import { mapToGetMatchListRes, mapToGetMatchRes } from './mapper/match.mapper';
 import { mapToMarkingRes } from './mapper/marking.mapper';
+import { StatisticService } from '@/modules/statistic/statistic.service';
+import { MatchService } from '@/modules/match/match.service';
+import { GetStatisticV2Response } from '@/modules/statistic/dto/get-statistics-v2.response';
+import type { StatisticMode } from '@/modules/statistic/dto/get-statistics-v2.request';
 
 @Injectable()
 export class CoachService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly statisticService: StatisticService,
+    private readonly matchService: MatchService,
   ) {}
 
   /**
@@ -233,6 +239,51 @@ export class CoachService {
     if (targetUser.teamId !== coachTeam.id) {
       throw new AppError('UNAUTHORIZED');
     }
+  }
+
+  /**
+   * 코치가 특정 유저의 통계를 조회합니다.
+   * 코치와 유저의 teamId가 일치해야 합니다.
+   */
+  async getUserStatistics(
+    coachUserId: number,
+    targetUserId: number,
+    from: Date,
+    to: Date,
+    mode: StatisticMode,
+  ): Promise<GetStatisticV2Response> {
+    // 코치 권한 및 팀 일치 확인
+    await this.validateCoachTeamAccess(coachUserId, targetUserId);
+
+    // 대상 유저의 경기 목록 조회
+    const matchList = await this.matchService.findAllByDateRange(
+      targetUserId,
+      from,
+      to,
+    );
+
+    // mode에 따라 필터링
+    const matches = mode === 'all'
+      ? matchList
+      : matchList.filter(match => match.stage === mode);
+
+    const matchIds = matches.map(match => match.id);
+
+    // 통계 계산
+    const summary = await this.statisticService.getSummary(targetUserId, matchIds);
+    const techniquesByMatch = await this.statisticService.getTechniquesByMatch(targetUserId, matches);
+    const opponentStats = await this.statisticService.getStatisticsByOpponent(targetUserId, matches);
+    const winRate = await this.statisticService.getWinRateByTechnique(targetUserId, matchIds);
+    const lossCount = await this.statisticService.getLossTypes(targetUserId, matchIds);
+
+    return {
+      matchCount: matchIds.length,
+      summary,
+      techniquesByMatch,
+      opponentStats,
+      winRate,
+      lossCount,
+    };
   }
 }
 

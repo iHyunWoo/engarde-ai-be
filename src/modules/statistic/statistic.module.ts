@@ -8,5 +8,6 @@ import { MatchModule } from '@/modules/match/match.module';
   imports: [AuthModule, MatchModule],
   controllers: [StatisticController],
   providers: [StatisticService],
+  exports: [StatisticService],
 })
 export class StatisticModule {}
