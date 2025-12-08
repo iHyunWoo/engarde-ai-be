@@ -79,7 +79,49 @@ export class MarkingsService {
     return mapToMarkingRes(created);
   }
 
-  async listByMatch(matchId: number) {
+  async listByMatch(userId: number, matchId: number) {
+    const requester = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+        deletedAt: true,
+      },
+    });
+    if (!requester || requester.deletedAt) {
+      throw new AppError('USER_NOT_FOUND');
+    }
+
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId, deletedAt: null },
+      include: {
+        user: {
+          select: {
+            id: true,
+            teamId: true,
+            deletedAt: true,
+          },
+        },
+      },
+    });
+    if (!match || match.user.deletedAt) {
+      throw new AppError('MATCH_NOT_FOUND');
+    }
+
+    const isOwner = match.userId === userId;
+    let isCoachOfTeam = false;
+    if (!isOwner && match.user.teamId !== null) {
+      const team = await this.prisma.team.findUnique({
+        where: { coachId: userId },
+        select: { id: true },
+      });
+      isCoachOfTeam = !!team && team.id === match.user.teamId;
+    }
+
+    if (!isOwner && !isCoachOfTeam) {
+      throw new AppError('UNAUTHORIZED');
+    }
+
     const rows = await this.prisma.marking.findMany({
       where: { matchId: matchId, deletedAt: null },
       orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],

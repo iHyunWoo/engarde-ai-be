@@ -10,6 +10,10 @@ import { HttpContextModule } from '@/shared/lib/http/http-context.module';
 import { OpponentModule } from '@/modules/opponent/opponent.module';
 import { TechniqueModule } from '@/modules/technique/technique.module';
 import { TechniqueAttemptModule } from '@/modules/technique-attempt/technique-attempt.module';
+import { TeamModule } from '@/modules/team/team.module';
+import { UserModule } from '@/modules/user/user.module';
+import { AdminModule } from '@/modules/admin/admin.module';
+import { CoachModule } from '@/modules/coach/coach.module';
 
 @Module({
   imports: [
@@ -24,6 +28,10 @@ import { TechniqueAttemptModule } from '@/modules/technique-attempt/technique-at
     OpponentModule,
     TechniqueModule,
     TechniqueAttemptModule,
+    TeamModule,
+    UserModule,
+    AdminModule,
+    CoachModule,
   ],
 })
 export class AppModule {}

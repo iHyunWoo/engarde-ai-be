@@ -1,5 +1,4 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
@@ -15,7 +14,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "resolvePackageJsonExports": false
   },
   "include": ["./src"]
 }

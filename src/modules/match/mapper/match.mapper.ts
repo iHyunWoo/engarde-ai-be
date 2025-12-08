@@ -27,6 +27,7 @@ export const mapToGetMatchRes = (m: MatchMapperInput): GetMatchResponse => ({
   techniqueAttempt: m.techniqueAttempt ?? [],
   createdAt: m.createdAt.toISOString(),
   stage: m.stage,
+  coachFeedback: m.coachFeedback,
 });
 
 export const mapToDeleteRes = (m: Match): DeleteMatchResponse => ({
@@ -36,6 +37,7 @@ export const mapToDeleteRes = (m: Match): DeleteMatchResponse => ({
 
 export interface MatchMapperInput {
   id: number;
+  coachFeedback: string;
   objectName: string;
   tournamentName: string;
   tournamentDate: Date;

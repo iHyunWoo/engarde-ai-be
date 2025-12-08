@@ -13,4 +13,5 @@ export class GetMatchResponse {
   createdAt: string;
   techniqueAttempt: TechniqueAttemptResponse[];
   stage: MatchStage;
+  coachFeedback: string;
 }

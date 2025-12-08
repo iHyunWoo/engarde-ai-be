@@ -9,19 +9,26 @@ datasource db {
 }
 
 model User {
-  id                Int                @id @default(autoincrement())
-  email             String             @unique
-  name              String
-  passwordHash      String
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  deletedAt         DateTime?
-  markings          Marking[]
-  matches           Match[]
-  notes             Note[]
-  opponents         Opponent[]
-  techniques        Technique[]
-  techniqueAttempts TechniqueAttempt[]
+  id                     Int                @id @default(autoincrement())
+  email                  String             @unique
+  name                   String
+  passwordHash           String
+  teamId                 Int?
+  role                   UserRole           @default(PLAYER)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  deletedAt              DateTime?
+  adminInviteCode        String?            @unique
+  adminInviteCodeExpiresAt DateTime?
+  markings               Marking[]
+  matches                Match[]
+  notes                  Note[]
+  opponents              Opponent[]
+  techniques             Technique[]
+  techniqueAttempts       TechniqueAttempt[]
+
+  team        Team? @relation("TeamMembers", fields: [teamId], references: [id])
+  coachedTeam Team? @relation("TeamCoach")
 }
 
 model Match {
@@ -36,6 +43,7 @@ model Match {
   tournamentDate    DateTime
   objectName        String             @default("")
   opponentId        Int
+  coachFeedback     String             @default("")
   stage             MatchStage         @default(preliminary)
   markings          Marking[]
   opponent          Opponent           @relation(fields: [opponentId], references: [id], map: "Match_opponent_id_fkey")
@@ -54,6 +62,7 @@ model Marking {
   quality             MarkingQuality
   remainTime          Int
   note                String
+  coachNote           String          @default("")
   userId              Int
   myTechniqueId       Int?
   opponentTechniqueId Int?
@@ -69,7 +78,7 @@ model Note {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   lastUsedAt DateTime  @default(now())
-  text       String    
+  text       String
   deletedAt  DateTime?
   user       User      @relation(fields: [userId], references: [id], map: "Note_user_id_fkey")
 
@@ -120,6 +129,22 @@ model TechniqueAttempt {
   user         User      @relation(fields: [userId], references: [id], map: "TechniqueAttempt_user_id_fkey")
 }
 
+model Team {
+  id                  Int       @id @default(autoincrement())
+  name                String
+  description         String?
+  inviteCode          String?    @unique
+  coachId             Int?       @unique
+  inviteCodeExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  coach   User?  @relation("TeamCoach", fields: [coachId], references: [id])
+  members User[] @relation("TeamMembers")
+}
+
+
 enum Result {
   win
   lose
@@ -136,4 +161,10 @@ enum MarkingQuality {
   good
   bad
   lucky
+}
+
+enum UserRole {
+  ADMIN
+  COACH
+  PLAYER
 }

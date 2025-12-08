@@ -28,12 +28,34 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (user) throw new ConflictException('This email already exists.');
 
-    const hashed = await bcrypt.hash(dto.password, 10);
+    // Team invite code 체크
+    const team = await this.prisma.team.findFirst({ where: {
+      inviteCode: dto.inviteCode,
+      inviteCodeExpiresAt: {
+        gt: new Date(),
+      },
+      deletedAt: null,
+    } });
+
+    // Admin invite code 체크
+    const adminUser = await this.prisma.user.findFirst({ where: {
+      adminInviteCode: dto.inviteCode,
+      adminInviteCodeExpiresAt: {
+        gt: new Date(),
+      },
+      deletedAt: null,
+      role: 'ADMIN',
+    } });
+
+    if (!team && !adminUser) throw new ConflictException('Invalid invite code.');
+
+    const hashed = await this.hashPassword(dto.password);
     const newUser = await this.prisma.user.create({
       data: {
         email: dto.email,
         name: dto.name,
         passwordHash: hashed,
+        teamId: team?.id ?? null, // admin invite code면 null
       },
     });
 
@@ -92,5 +114,15 @@ export class AuthService {
       secure: true,
       maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
     });
+  }
+
+  /**
+   * 비밀번호를 검증하고 암호화합니다.
+   * 회원가입 및 코치 계정 생성 시 사용됩니다.
+   * @param password 평문 비밀번호
+   * @returns 암호화된 비밀번호 해시
+   */
+  async hashPassword(password: string): Promise<string> {
+    return await bcrypt.hash(password, 10);
   }
 }

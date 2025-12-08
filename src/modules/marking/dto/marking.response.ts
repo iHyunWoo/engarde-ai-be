@@ -12,6 +12,7 @@ export class MarkingResponse {
   opponentTechnique: TechniqueResponse | null;
   quality: MarkingQuality;
   note: string;
+  coachNote: string;
   remainTime: number;
 }
 
