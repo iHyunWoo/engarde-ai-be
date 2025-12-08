@@ -38,4 +38,11 @@ export class AuthController {
     const result = this.authService.refresh(refreshToken);
     return new BaseResponse(200, 'refresh 성공', result);
   }
+
+  @TypedRoute.Post('logout')
+  @HttpCode(200)
+  logout() {
+    this.authService.logout();
+    return new BaseResponse(200, '로그아웃 성공');
+  }
 }

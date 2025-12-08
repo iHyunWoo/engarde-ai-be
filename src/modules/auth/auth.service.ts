@@ -117,6 +117,28 @@ export class AuthService {
   }
 
   /**
+   * 로그아웃 처리 - 쿠키 삭제
+   */
+  logout() {
+    // 쿠키를 삭제하기 위해 빈 값과 maxAge 0으로 설정
+    this.cookieJar.set('access_token', '', {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      maxAge: 0,
+    });
+
+    this.cookieJar.set('refresh_token', '', {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      maxAge: 0,
+    });
+
+    return;
+  }
+
+  /**
    * 비밀번호를 검증하고 암호화합니다.
    * 회원가입 및 코치 계정 생성 시 사용됩니다.
    * @param password 평문 비밀번호
