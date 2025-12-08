@@ -31,17 +31,19 @@ export class TeamService {
         description: dto.description,
         inviteCode: null,
         inviteCodeExpiresAt: null,
+        maxMembers: dto.maxMembers ?? undefined, // undefined면 DB 기본값(10) 사용
       },
       include: {
         coach: true,
       },
     });
 
-    // 멤버 수 카운트
+    // 멤버 수 카운트 (코치 제외)
     const memberCount = await this.prisma.user.count({
       where: {
         teamId: created.id,
         deletedAt: null,
+        role: 'PLAYER', // 코치는 멤버 카운트에 포함되지 않음
       },
     });
 
@@ -110,12 +112,15 @@ export class TeamService {
       throw new AppError('UNAUTHORIZED');
     }
 
-    return team.members.map(member => ({
-      id: member.id,
-      name: member.name,
-      email: member.email,
-      role: member.role,
-    }));
+    // 코치는 멤버 리스트에서 제외
+    return team.members
+      .filter(member => member.role !== 'COACH')
+      .map(member => ({
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        role: member.role,
+      }));
   }
 
   async removeMember(teamId: number, memberId: number, userId: number) {
@@ -176,6 +181,7 @@ export class TeamService {
             members: {
               where: {
                 deletedAt: null,
+                role: 'PLAYER', // 코치는 멤버 리스트에서 제외
               },
               select: {
                 id: true,
@@ -192,6 +198,7 @@ export class TeamService {
             members: {
               where: {
                 deletedAt: null,
+                role: 'PLAYER', // 코치는 멤버 리스트에서 제외
               },
               select: {
                 id: true,
@@ -266,13 +273,14 @@ export class TeamService {
     const hasNextPage = teams.length > take;
     const trimmed = hasNextPage ? teams.slice(0, -1) : teams;
 
-    // 각 팀의 멤버 수 조회
+    // 각 팀의 멤버 수 조회 (코치 제외)
     const teamsWithCount = await Promise.all(
       trimmed.map(async (team) => {
         const memberCount = await this.prisma.user.count({
           where: {
             teamId: team.id,
             deletedAt: null,
+            role: 'PLAYER', // 코치는 멤버 카운트에 포함되지 않음
           },
         });
         return {
@@ -304,6 +312,7 @@ export class TeamService {
         members: {
           where: {
             deletedAt: null,
+            role: 'PLAYER', // 코치는 멤버 리스트에서 제외
           },
           select: {
             id: true,

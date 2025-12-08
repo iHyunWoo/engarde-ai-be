@@ -12,6 +12,7 @@ interface TeamListMapperInput {
     email: string;
   } | null;
   memberCount: number;
+  maxMembers?: number | null;
 }
 
 export function mapToTeamListResponse(row: TeamListMapperInput): TeamListResponse {
@@ -27,6 +28,7 @@ export function mapToTeamListResponse(row: TeamListMapperInput): TeamListRespons
       email: row.coach.email,
     } : undefined,
     memberCount: row.memberCount,
+    maxMembers: row.maxMembers || undefined,
   };
 }
 

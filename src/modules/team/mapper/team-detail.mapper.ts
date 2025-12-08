@@ -6,6 +6,7 @@ interface TeamDetailMapperInput {
   description?: string | null;
   inviteCode: string | null;
   inviteCodeExpiresAt?: Date | null;
+  maxMembers?: number | null;
   createdAt: Date;
   updatedAt: Date;
   coach: {
@@ -27,6 +28,7 @@ export function mapToTeamDetailResponse(row: TeamDetailMapperInput): TeamDetailR
     description: row.description || undefined,
     inviteCode: row.inviteCode || '',
     inviteCodeExpiresAt: row.inviteCodeExpiresAt || undefined,
+    maxMembers: row.maxMembers || undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     coach: row.coach ? {
