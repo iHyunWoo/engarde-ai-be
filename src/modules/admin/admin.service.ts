@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { CreateCoachRequest } from './dto/create-coach.request';
 import { TechniqueService } from '@/modules/technique/technique.service';
 import { AuthService } from '@/modules/auth/auth.service';
+import { UpdateTeamMaxMembersRequest } from './dto/update-team-max-members.request';
 
 @Injectable()
 export class AdminService {
@@ -372,6 +373,50 @@ export class AdminService {
     await this.prisma.team.update({
       where: { id: teamId },
       data: { coachId: null },
+    });
+
+    return { success: true };
+  }
+
+  async updateTeamMaxMembers(
+    adminUserId: number,
+    teamId: number,
+    dto: UpdateTeamMaxMembersRequest,
+  ) {
+    // ADMIN 권한 확인
+    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId } });
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new AppError('UNAUTHORIZED');
+    }
+
+    // 팀 존재 확인
+    const team = await this.prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) {
+      throw new AppError('TEAM_NOT_FOUND');
+    }
+
+    if (team.deletedAt) {
+      throw new AppError('TEAM_NOT_FOUND');
+    }
+
+    // 현재 멤버 수 확인 (코치 제외)
+    const currentMemberCount = await this.prisma.user.count({
+      where: {
+        teamId: teamId,
+        deletedAt: null,
+        role: 'PLAYER', // 코치는 멤버 카운트에 포함되지 않음
+      },
+    });
+
+    // 최대 인원수가 설정되고, 현재 멤버 수보다 작으면 에러
+    if (dto.maxMembers !== null && dto.maxMembers !== undefined && dto.maxMembers < currentMemberCount) {
+      throw new AppError('TEAM_MAX_MEMBERS_EXCEEDED');
+    }
+
+    // 최대 인원수 업데이트
+    await this.prisma.team.update({
+      where: { id: teamId },
+      data: { maxMembers: dto.maxMembers ?? null },
     });
 
     return { success: true };

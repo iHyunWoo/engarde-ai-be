@@ -10,6 +10,7 @@ import { GetOrphanedUsersQuery } from './dto/get-orphaned-users.query';
 import { GetAllUsersQuery } from './dto/get-all-users.query';
 import { AssignCoachRequest } from './dto/assign-coach.request';
 import { CreateCoachRequest } from './dto/create-coach.request';
+import { UpdateTeamMaxMembersRequest } from './dto/update-team-max-members.request';
 import { BaseResponse } from '@/shared/dto/base-response.dto';
 import { Authenticated } from '@/shared/decorators/authenticated.decorator';
 import { User } from '@/shared/decorators/user.decorator';
@@ -152,6 +153,23 @@ export class AdminController {
       Number(teamId),
     );
     return new BaseResponse(HttpStatus.OK, '코치 등록 해제 성공', result);
+  }
+
+  @TypedRoute.Patch('teams/:teamId/max-members')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @RequireRoles('ADMIN')
+  async updateTeamMaxMembers(
+    @User() user: JwtPayload,
+    @TypedParam('teamId') teamId: string,
+    @TypedBody() dto: UpdateTeamMaxMembersRequest,
+  ) {
+    const result = await this.adminService.updateTeamMaxMembers(
+      user.userId,
+      Number(teamId),
+      dto,
+    );
+    return new BaseResponse(HttpStatus.OK, '팀 최대 인원수 설정 성공', result);
   }
 }
 

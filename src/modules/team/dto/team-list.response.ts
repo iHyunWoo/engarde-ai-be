@@ -10,5 +10,6 @@ export class TeamListResponse {
     email: string;
   };
   memberCount: number;
+  maxMembers?: number;
 }
 

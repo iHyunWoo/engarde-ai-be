@@ -136,6 +136,7 @@ model Team {
   inviteCode          String?    @unique
   coachId             Int?       @unique
   inviteCodeExpiresAt DateTime?
+  maxMembers          Int?       @default(10)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   deletedAt           DateTime?
