@@ -3,6 +3,8 @@ export type ErrorKey =
   | 'TOKEN_MISSING'
   | 'TOKEN_EXPIRED'
   | 'API_KEY_MISMATCH'
+  | 'INVALID_CREDENTIALS'
+  | 'INVALID_INVITE_CODE'
 
   // FILE
   | 'FILE_CONTENT_TYPE_MISSING'
@@ -50,6 +52,8 @@ export const ERRORS: Record<ErrorKey, { code: number; message: string }> = {
   TOKEN_MISSING:   { code: 401, message: 'TOKEN_MISSING' },
   TOKEN_EXPIRED:   { code: 401, message: 'TOKEN_EXPIRED' },
   API_KEY_MISMATCH:   { code: 403, message: 'API_KEY_MISMATCH' },
+  INVALID_CREDENTIALS: { code: 400, message: 'The email or password is incorrect' },
+  INVALID_INVITE_CODE: { code: 400, message: 'Invalid invite code' },
 
   //FILE
   FILE_CONTENT_TYPE_MISSING: {code: 400, message: 'Content Type is required'},

@@ -1,7 +1,5 @@
 import {
   Injectable,
-  UnauthorizedException,
-  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/lib/prisma/prisma.service';
 import { SignupDto } from './dto/signup.dto';
@@ -26,7 +24,7 @@ export class AuthService {
 
   async signup(dto: SignupDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (user) throw new ConflictException('This email already exists.');
+    if (user) throw new AppError('EMAIL_ALREADY_EXISTS');
 
     // Team invite code 체크
     const team = await this.prisma.team.findFirst({ where: {
@@ -47,7 +45,7 @@ export class AuthService {
       role: 'ADMIN',
     } });
 
-    if (!team && !adminUser) throw new ConflictException('Invalid invite code.');
+    if (!team && !adminUser) throw new AppError('INVALID_INVITE_CODE');
 
     const hashed = await this.hashPassword(dto.password);
     const newUser = await this.prisma.user.create({
@@ -68,11 +66,11 @@ export class AuthService {
   async login(dto: LoginRequest): Promise<LoginResponse> {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user)
-      throw new UnauthorizedException('The email or password is incorrect.');
+      throw new AppError('INVALID_CREDENTIALS');
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid)
-      throw new UnauthorizedException('The email or password is incorrect.');
+      throw new AppError('INVALID_CREDENTIALS');
 
     this.issueTokens(user.id, dto.rememberMe);
 
