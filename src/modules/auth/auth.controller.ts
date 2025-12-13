@@ -1,4 +1,5 @@
-import { Controller, HttpCode } from '@nestjs/common';
+import { Controller, HttpCode, UseGuards } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginRequest } from './dto/login.request';
@@ -18,12 +19,16 @@ export class AuthController {
 
   @TypedRoute.Post('signup')
   @HttpCode(201)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 1분에 5번만 허용
   async signup(@TypedBody() dto: SignupDto) {
     const result = await this.authService.signup(dto);
     return new BaseResponse(201, '회원가입 성공', result);
   }
 
   @TypedRoute.Post('login')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 1분에 5번만 허용
   async login(
     @TypedBody() dto: LoginRequest
   ) {
