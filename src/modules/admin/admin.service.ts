@@ -106,6 +106,21 @@ export class AdminService {
       throw new AppError('FORBIDDEN');
     }
 
+    // 대상 유저 조회
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { role: true },
+    });
+
+    if (!targetUser) {
+      throw new AppError('USER_NOT_FOUND');
+    }
+
+    // 코치나 admin은 삭제할 수 없음
+    if (targetUser.role === 'ADMIN' || targetUser.role === 'COACH') {
+      throw new AppError('FORBIDDEN');
+    }
+
     await this.prisma.user.update({
       where: { id: targetUserId },
       data: { deletedAt: new Date() },
