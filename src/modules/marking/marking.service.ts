@@ -60,7 +60,7 @@ export class MarkingsService {
         opponentTechniqueId: opponentTechniqueId,
         quality: dto.quality,
         note: dto.note,
-        remainTime: dto.remainTime,
+        pisteLocation: dto.pisteLocation,
         userId: userId
       },
       include: {

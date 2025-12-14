@@ -15,7 +15,7 @@ export function mapToMarkingRes(row: MarkingMapperInput): MarkingResponse {
     quality: row.quality,
     note: row.note,
     coachNote: row.coachNote,
-    remainTime: row.remainTime,
+    pisteLocation: row.pisteLocation,
   };
 }
 
@@ -31,7 +31,7 @@ interface MarkingMapperInput{
   myTechnique: TechniqueResponse | null
   opponentTechnique: TechniqueResponse | null
   quality: MarkingQuality
-  remainTime: number
+  pisteLocation: number | null
   note: string
   coachNote: string
 }

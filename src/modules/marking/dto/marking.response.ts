@@ -13,6 +13,6 @@ export class MarkingResponse {
   quality: MarkingQuality;
   note: string;
   coachNote: string;
-  remainTime: number;
+  pisteLocation: number | null;
 }
 

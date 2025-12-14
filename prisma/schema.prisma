@@ -60,12 +60,12 @@ model Marking {
   updatedAt           DateTime       @updatedAt
   deletedAt           DateTime?
   quality             MarkingQuality
-  remainTime          Int
   note                String
   coachNote           String          @default("")
   userId              Int
   myTechniqueId       Int?
   opponentTechniqueId Int?
+  pisteLocation       Int            @default(0)
   match               Match          @relation(fields: [matchId], references: [id], map: "Marking_match_id_fkey")
   myTechnique         Technique?     @relation("my_technique", fields: [myTechniqueId], references: [id], map: "Marking_my_technique_id_fkey")
   opponentTechnique   Technique?     @relation("opponent_technique", fields: [opponentTechniqueId], references: [id], map: "Marking_opponent_technique_id_fkey")
