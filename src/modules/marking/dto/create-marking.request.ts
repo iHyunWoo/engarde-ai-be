@@ -31,6 +31,5 @@ export class CreateMarkingRequest {
   note: string;
 
   @IsInt()
-  @Min(0)
-  remainTime: number;
+  pisteLocation: number;
 }
