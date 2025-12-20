@@ -16,6 +16,7 @@ export function mapToMarkingRes(row: MarkingMapperInput): MarkingResponse {
     note: row.note,
     coachNote: row.coachNote,
     pisteLocation: row.pisteLocation,
+    isLeftPosition: row.isLeftPosition,
   };
 }
 
@@ -34,4 +35,5 @@ interface MarkingMapperInput{
   pisteLocation: number | null
   note: string
   coachNote: string
+  isLeftPosition: boolean
 }

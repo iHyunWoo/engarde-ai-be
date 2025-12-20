@@ -61,6 +61,7 @@ export class MarkingsService {
         quality: dto.quality,
         note: dto.note,
         pisteLocation: dto.pisteLocation,
+        isLeftPosition: dto.isLeftPosition,
         userId: userId
       },
       include: {
