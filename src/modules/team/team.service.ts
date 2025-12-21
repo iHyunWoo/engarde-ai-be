@@ -116,11 +116,11 @@ export class TeamService {
     return team.members
       .filter(member => member.role !== 'COACH')
       .map(member => ({
-        id: member.id,
-        name: member.name,
-        email: member.email,
-        role: member.role,
-      }));
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      role: member.role,
+    }));
   }
 
   async removeMember(teamId: number, memberId: number, userId: number) {

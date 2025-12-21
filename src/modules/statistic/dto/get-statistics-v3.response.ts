@@ -34,6 +34,12 @@ export interface TacticMatchupDetail {
   subMatchups?: TacticMatchupDetail[];
 }
 
+export interface LocationStat {
+  location: number; // pisteLocation
+  winCount: number; // 득점 횟수
+  loseCount: number; // 실점 횟수
+}
+
 export interface GetStatisticV3Response {
   // 득점한 횟수 높은 tactic (전체)
   topScoringTactics: TacticScoreStat[];
@@ -41,4 +47,6 @@ export interface GetStatisticV3Response {
   topConcededTactics: TacticScoreStat[];
   // tactic 상성 (Main vs Main, 클릭하면 Sub 상세 정보)
   tacticMatchups: TacticMatchupDetail[];
+  // 위치별 통계 (pisteLocation)
+  locationStats: LocationStat[];
 }
