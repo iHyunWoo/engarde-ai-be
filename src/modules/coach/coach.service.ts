@@ -11,6 +11,7 @@ import { StatisticService } from '@/modules/statistic/statistic.service';
 import { MatchService } from '@/modules/match/match.service';
 import { GetStatisticV2Response } from '@/modules/statistic/dto/get-statistics-v2.response';
 import type { StatisticMode } from '@/modules/statistic/dto/get-statistics-v2.request';
+import type { GetStatisticV3Response } from '@/modules/statistic/dto/get-statistics-v3.response';
 
 @Injectable()
 export class CoachService {
@@ -284,6 +285,38 @@ export class CoachService {
       winRate,
       lossCount,
     };
+  }
+
+  /**
+   * 코치가 특정 유저의 v3 통계를 조회합니다.
+   * 코치와 유저의 teamId가 일치해야 합니다.
+   */
+  async getUserStatisticsV3(
+    coachUserId: number,
+    targetUserId: number,
+    from: Date,
+    to: Date,
+    mode: StatisticMode,
+  ): Promise<GetStatisticV3Response> {
+    // 코치 권한 및 팀 일치 확인
+    await this.validateCoachTeamAccess(coachUserId, targetUserId);
+
+    // 대상 유저의 경기 목록 조회
+    const matchList = await this.matchService.findAllByDateRange(
+      targetUserId,
+      from,
+      to,
+    );
+
+    // mode에 따라 필터링
+    const matches = mode === 'all'
+      ? matchList
+      : matchList.filter(match => match.stage === mode);
+
+    const matchIds = matches.map(match => match.id);
+
+    // v3 통계 계산
+    return await this.statisticService.getStatisticsV3(targetUserId, matchIds);
   }
 }
 
