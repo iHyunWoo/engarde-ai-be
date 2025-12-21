@@ -16,6 +16,8 @@ import { GetMatchListRequest } from '@/modules/match/dto/get-match-list.request'
 import { UpdateMatchFeedbackRequest } from '@/modules/match/dto/update-match-feedback.request';
 import { UpdateMarkingCoachNoteRequest } from '@/modules/marking/dto/update-marking-coach-note.request';
 import type { GetStatisticsV2Request } from '@/modules/statistic/dto/get-statistics-v2.request';
+import type { GetStatisticV3Request } from '@/modules/statistic/dto/get-statistics-v3.request';
+import type { GetStatisticV3Response } from '@/modules/statistic/dto/get-statistics-v3.response';
 
 @Authenticated()
 @Controller('coaches')
@@ -104,6 +106,26 @@ export class CoachController {
   ) {
     const { from, to, mode } = query;
     const result = await this.coachService.getUserStatistics(
+      user.userId,
+      Number(userId),
+      new Date(from),
+      new Date(to),
+      mode,
+    );
+    return new BaseResponse(HttpStatus.OK, '유저 통계 조회 성공', result);
+  }
+
+  @TypedRoute.Get('users/:userId/statistics/v3')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @RequireRoles('COACH')
+  async getUserStatisticsV3(
+    @User() user: JwtPayload,
+    @TypedParam('userId') userId: string,
+    @TypedQuery() query: GetStatisticV3Request,
+  ): Promise<BaseResponse<GetStatisticV3Response>> {
+    const { from, to, mode } = query;
+    const result = await this.coachService.getUserStatisticsV3(
       user.userId,
       Number(userId),
       new Date(from),

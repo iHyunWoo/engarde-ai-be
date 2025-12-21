@@ -8,7 +8,7 @@ import {
 import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.response';
 import { MatchStage as MatchStage } from '@prisma/client';
 import { StatisticSummary, TechniquesByMatch } from '@/modules/statistic/dto/get-statistics-v2.response';
-import type { GetStatisticV3Response, TacticScoreStat, TacticMatchupDetail } from '@/modules/statistic/dto/get-statistics-v3.response';
+import type { GetStatisticV3Response, TacticScoreStat, TacticMatchupDetail, LocationStat } from '@/modules/statistic/dto/get-statistics-v3.response';
 
 @Injectable()
 export class StatisticService {
@@ -557,10 +557,34 @@ export class StatisticService {
       }
     }
 
+    // 4. 위치별 통계 (pisteLocation)
+    const locationStatsMap = new Map<number, { winCount: number; loseCount: number }>();
+    for (const marking of markings) {
+      const location = marking.pisteLocation;
+      const existing = locationStatsMap.get(location) ?? { winCount: 0, loseCount: 0 };
+      
+      if (marking.result === 'win') {
+        existing.winCount += 1;
+      } else if (marking.result === 'lose') {
+        existing.loseCount += 1;
+      }
+      
+      locationStatsMap.set(location, existing);
+    }
+
+    const locationStats: LocationStat[] = Array.from(locationStatsMap.entries())
+      .map(([location, { winCount, loseCount }]) => ({
+        location,
+        winCount,
+        loseCount,
+      }))
+      .sort((a, b) => a.location - b.location);
+
     return {
       topScoringTactics,
       topConcededTactics,
       tacticMatchups,
+      locationStats,
     };
   }
 }

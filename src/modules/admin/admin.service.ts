@@ -10,6 +10,9 @@ import { CreateCoachRequest } from './dto/create-coach.request';
 import { TechniqueService } from '@/modules/technique/technique.service';
 import { AuthService } from '@/modules/auth/auth.service';
 import { UpdateTeamMaxMembersRequest } from './dto/update-team-max-members.request';
+import { TeamListResponse } from '@/modules/team/dto/team-list.response';
+import { mapToTeamListResponse, mapToTeamListResponseList } from '@/modules/team/mapper/team-list.mapper';
+import { GetOrphanedUsersQuery } from './dto/get-orphaned-users.query';
 
 @Injectable()
 export class AdminService {
@@ -433,6 +436,165 @@ export class AdminService {
       where: { id: teamId },
       data: { maxMembers: dto.maxMembers ?? null },
     });
+
+    return { success: true };
+  }
+
+  async deactivateTeam(adminUserId: number, teamId: number) {
+    // ADMIN 권한 확인
+    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId } });
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new AppError('UNAUTHORIZED');
+    }
+
+    // 팀 존재 확인
+    const team = await this.prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) {
+      throw new AppError('TEAM_NOT_FOUND');
+    }
+
+    // 이미 비활성화된 팀인지 확인
+    if (team.deletedAt) {
+      throw new AppError('TEAM_ALREADY_DEACTIVATED');
+    }
+
+    const now = new Date();
+
+    // 팀 비활성화 및 소속 팀원(코치 포함) 비활성화
+    await this.prisma.$transaction([
+      // 팀 비활성화
+      this.prisma.team.update({
+        where: { id: teamId },
+        data: { deletedAt: now },
+      }),
+      // 팀원들 비활성화 (teamId가 해당 팀인 유저들)
+      this.prisma.user.updateMany({
+        where: {
+          teamId: teamId,
+          deletedAt: null, // 이미 비활성화된 유저는 제외
+        },
+        data: { deletedAt: now },
+      }),
+      // 코치 비활성화 (coachId가 해당 팀인 유저)
+      ...(team.coachId ? [
+        this.prisma.user.updateMany({
+          where: {
+            id: team.coachId,
+            deletedAt: null, // 이미 비활성화된 유저는 제외
+          },
+          data: { deletedAt: now },
+        }),
+      ] : []),
+    ]);
+
+    return { success: true };
+  }
+
+  async getDeactivatedTeams(
+    adminUserId: number,
+    limit: number = 10,
+    cursor?: number,
+  ): Promise<CursorResponse<TeamListResponse>> {
+    // ADMIN 권한 확인
+    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId } });
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new AppError('UNAUTHORIZED');
+    }
+
+    const take = limit ?? 10;
+    const where: Prisma.TeamWhereInput = {
+      deletedAt: { not: null }, // 비활성화된 팀만
+    };
+
+    const teams = await this.prisma.team.findMany({
+      where,
+      include: {
+        coach: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { id: 'desc' },
+      take: take + 1,
+      ...(cursor && {
+        skip: 1,
+        cursor: { id: cursor },
+      }),
+    });
+
+    const hasNextPage = teams.length > take;
+    const trimmed = hasNextPage ? teams.slice(0, -1) : teams;
+
+    // 각 팀의 멤버 수 조회 (코치 제외)
+    const teamsWithCount = await Promise.all(
+      trimmed.map(async (team) => {
+        const memberCount = await this.prisma.user.count({
+          where: {
+            teamId: team.id,
+            deletedAt: null,
+            role: 'PLAYER', // 코치는 멤버 카운트에 포함되지 않음
+          },
+        });
+        return {
+          ...team,
+          memberCount,
+        };
+      }),
+    );
+
+    return {
+      items: mapToTeamListResponseList(teamsWithCount),
+      nextCursor: hasNextPage ? trimmed[trimmed.length - 1].id : null,
+    };
+  }
+
+  async restoreTeam(adminUserId: number, teamId: number) {
+    // ADMIN 권한 확인
+    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId } });
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new AppError('UNAUTHORIZED');
+    }
+
+    // 팀 존재 확인
+    const team = await this.prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) {
+      throw new AppError('TEAM_NOT_FOUND');
+    }
+
+    // 이미 활성화된 팀인지 확인
+    if (!team.deletedAt) {
+      throw new AppError('TEAM_ALREADY_ACTIVATED');
+    }
+
+    // 팀 복구 및 소속 팀원(코치 포함) 복구
+    await this.prisma.$transaction([
+      // 팀 복구
+      this.prisma.team.update({
+        where: { id: teamId },
+        data: { deletedAt: null },
+      }),
+      // 팀원들 복구 (teamId가 해당 팀인 모든 비활성화된 유저)
+      this.prisma.user.updateMany({
+        where: {
+          teamId: teamId,
+          deletedAt: { not: null }, // 비활성화된 유저만
+        },
+        data: { deletedAt: null },
+      }),
+      // 코치 복구 (coachId가 해당 팀인 비활성화된 유저)
+      ...(team.coachId ? [
+        this.prisma.user.updateMany({
+          where: {
+            id: team.coachId,
+            deletedAt: { not: null }, // 비활성화된 유저만
+          },
+          data: { deletedAt: null },
+        }),
+      ] : []),
+    ]);
 
     return { success: true };
   }
