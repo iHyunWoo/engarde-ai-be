@@ -39,6 +39,8 @@ export type ErrorKey =
   | 'COACH_CANNOT_LEAVE_TEAM'
   | 'COACH_NOT_FOUND'
   | 'TEAM_MAX_MEMBERS_EXCEEDED'
+  | 'TEAM_ALREADY_DEACTIVATED'
+  | 'TEAM_ALREADY_ACTIVATED'
   | 'UNAUTHORIZED'
   | 'USER_NOT_FOUND'
   | 'EMAIL_ALREADY_EXISTS'
@@ -88,6 +90,8 @@ export const ERRORS: Record<ErrorKey, { code: number; message: string }> = {
   COACH_CANNOT_LEAVE_TEAM: { code: 400, message: '코치는 팀을 떠날 수 없습니다' },
   COACH_NOT_FOUND: { code: 404, message: '코치를 찾을 수 없습니다' },
   TEAM_MAX_MEMBERS_EXCEEDED: { code: 400, message: '현재 멤버 수가 최대 인원수보다 많습니다' },
+  TEAM_ALREADY_DEACTIVATED: { code: 400, message: '이미 비활성화된 팀입니다' },
+  TEAM_ALREADY_ACTIVATED: { code: 400, message: '이미 활성화된 팀입니다' },
   UNAUTHORIZED: { code: 403, message: '권한이 없습니다' },
   USER_NOT_FOUND: { code: 404, message: '사용자를 찾을 수 없습니다' },
   EMAIL_ALREADY_EXISTS: { code: 400, message: '이미 존재하는 이메일입니다' },

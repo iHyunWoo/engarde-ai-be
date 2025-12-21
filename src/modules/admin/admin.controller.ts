@@ -11,6 +11,7 @@ import { GetAllUsersQuery } from './dto/get-all-users.query';
 import { AssignCoachRequest } from './dto/assign-coach.request';
 import { CreateCoachRequest } from './dto/create-coach.request';
 import { UpdateTeamMaxMembersRequest } from './dto/update-team-max-members.request';
+import { GetDeactivatedTeamsQuery } from './dto/get-deactivated-teams.query';
 import { BaseResponse } from '@/shared/dto/base-response.dto';
 import { Authenticated } from '@/shared/decorators/authenticated.decorator';
 import { User } from '@/shared/decorators/user.decorator';
@@ -170,6 +171,53 @@ export class AdminController {
       dto,
     );
     return new BaseResponse(HttpStatus.OK, '팀 최대 인원수 설정 성공', result);
+  }
+
+  @TypedRoute.Delete('teams/:teamId/deactivate')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @RequireRoles('ADMIN')
+  async deactivateTeam(
+    @User() user: JwtPayload,
+    @TypedParam('teamId') teamId: string,
+  ) {
+    const result = await this.adminService.deactivateTeam(
+      user.userId,
+      Number(teamId),
+    );
+    return new BaseResponse(HttpStatus.OK, '팀 비활성화 성공', result);
+  }
+
+  @TypedRoute.Get('teams/deactivated')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @RequireRoles('ADMIN')
+  async getDeactivatedTeams(
+    @User() user: JwtPayload,
+    @TypedQuery() query: GetDeactivatedTeamsQuery,
+  ) {
+    const { limit, cursor } = query;
+    const result = await this.adminService.getDeactivatedTeams(
+      user.userId,
+      limit,
+      cursor ? Number(cursor) : undefined,
+    );
+    return new BaseResponse(HttpStatus.OK, '비활성화 팀 목록 조회 성공', result);
+  }
+
+  @TypedRoute.Patch('teams/:teamId/restore')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @RequireRoles('ADMIN')
+  async restoreTeam(
+    @User() user: JwtPayload,
+    @TypedParam('teamId') teamId: string,
+  ) {
+    const result = await this.adminService.restoreTeam(
+      user.userId,
+      Number(teamId),
+    );
+    return new BaseResponse(HttpStatus.OK, '팀 복구 성공', result);
   }
 }
 
