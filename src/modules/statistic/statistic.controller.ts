@@ -10,6 +10,8 @@ import { MatchService } from '@/modules/match/match.service';
 import { GetStatisticResponse } from '@/modules/statistic/dto/get-statistic.response';
 import type { GetStatisticsV2Request } from '@/modules/statistic/dto/get-statistics-v2.request';
 import { GetStatisticV2Response } from '@/modules/statistic/dto/get-statistics-v2.response';
+import type { GetStatisticV3Request } from '@/modules/statistic/dto/get-statistics-v3.request';
+import type { GetStatisticV3Response } from '@/modules/statistic/dto/get-statistics-v3.response';
 
 @Authenticated()
 @Controller('statistics')
@@ -84,6 +86,34 @@ export class StatisticController {
       lossCount
     }
 
+    return new BaseResponse(200, '조회 성공', result);
+  }
+
+  @TypedRoute.Get("/v3")
+  async getStatisticsV3(
+    @User() user: JwtPayload,
+    @TypedQuery() query: GetStatisticV3Request,
+  ): Promise<BaseResponse<GetStatisticV3Response>> {
+    const { from, to, mode } = query;
+    const userId = user.userId;
+    
+    // 날짜 범위에 맞는 경기 목록 가져오기
+    const matchList = await this.matchService.findAllByDateRange(
+      userId,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
+    );
+    
+    // mode에 따라 필터링
+    const matches = mode === 'all'
+      ? matchList
+      : matchList.filter(match => match.stage === mode);
+    
+    const matchIds = matches.map(match => match.id);
+    
+    // 새로운 통계 계산
+    const result = await this.statisticService.getStatisticsV3(userId, matchIds);
+    
     return new BaseResponse(200, '조회 성공', result);
   }
 }
