@@ -14,5 +14,6 @@ export class MarkingResponse {
   note: string;
   coachNote: string;
   pisteLocation: number | null;
+  isLeftPosition: boolean;
 }
 

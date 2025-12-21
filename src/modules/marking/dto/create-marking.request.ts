@@ -1,4 +1,4 @@
-import { IsInt, IsEnum, IsString, MaxLength, Min } from 'class-validator';
+import { IsInt, IsEnum, IsString, MaxLength, Min, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 import {
   Result as MarkingResult,
@@ -32,4 +32,7 @@ export class CreateMarkingRequest {
 
   @IsInt()
   pisteLocation: number;
+
+  @IsBoolean()
+  isLeftPosition: boolean;
 }

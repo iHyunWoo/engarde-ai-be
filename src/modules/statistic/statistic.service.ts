@@ -8,6 +8,7 @@ import {
 import { GetMatchListResponse } from '@/modules/match/dto/get-match-list.response';
 import { MatchStage as MatchStage } from '@prisma/client';
 import { StatisticSummary, TechniquesByMatch } from '@/modules/statistic/dto/get-statistics-v2.response';
+import type { GetStatisticV3Response, TacticScoreStat, TacticMatchupDetail } from '@/modules/statistic/dto/get-statistics-v3.response';
 
 @Injectable()
 export class StatisticService {
@@ -336,6 +337,230 @@ export class StatisticService {
     return {
       win: topWins,
       lose: topLoses,
+    };
+  }
+
+  async getStatisticsV3(userId: number, matchIds: number[]): Promise<GetStatisticV3Response> {
+    // 모든 marking 가져오기
+    const markings = await this.prisma.marking.findMany({
+      where: {
+        userId: userId,
+        matchId: { in: matchIds },
+        deletedAt: null,
+      },
+      include: {
+        myTechnique: {
+          where: { deletedAt: null },
+        },
+        opponentTechnique: {
+          where: { deletedAt: null },
+        },
+      },
+    });
+
+    // 1. 득점한 횟수 높은 tactic (전체)
+    const scoringCounts = new Map<number, { name: string; count: number; isMain: boolean; parentId: number | null }>();
+    for (const marking of markings) {
+      if (marking.result === 'win' && marking.myTechnique) {
+        const tech = marking.myTechnique;
+        const existing = scoringCounts.get(tech.id) ?? {
+          name: tech.name,
+          count: 0,
+          isMain: tech.parentId === null,
+          parentId: tech.parentId,
+        };
+        existing.count += 1;
+        scoringCounts.set(tech.id, existing);
+      }
+    }
+
+    const topScoringTactics: TacticScoreStat[] = Array.from(scoringCounts.entries())
+      .map(([id, { name, count, isMain, parentId }]) => ({
+        id,
+        name,
+        count,
+        isMain,
+        parentId,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // 2. 득점을 제일 많이 당한 tactic (전체)
+    const concededCounts = new Map<number, { name: string; count: number; isMain: boolean; parentId: number | null }>();
+    for (const marking of markings) {
+      if (marking.result === 'lose' && marking.opponentTechnique) {
+        const tech = marking.opponentTechnique;
+        const existing = concededCounts.get(tech.id) ?? {
+          name: tech.name,
+          count: 0,
+          isMain: tech.parentId === null,
+          parentId: tech.parentId,
+        };
+        existing.count += 1;
+        concededCounts.set(tech.id, existing);
+      }
+    }
+
+    const topConcededTactics: TacticScoreStat[] = Array.from(concededCounts.entries())
+      .map(([id, { name, count, isMain, parentId }]) => ({
+        id,
+        name,
+        count,
+        isMain,
+        parentId,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // 3. tactic 상성 계산
+    // 먼저 모든 Main tactic 가져오기
+    const mainTechniques = await this.prisma.technique.findMany({
+      where: {
+        userId: userId,
+        parentId: null,
+        deletedAt: null,
+      },
+      include: {
+        children: {
+          where: { deletedAt: null },
+        },
+      },
+    });
+
+    const tacticMatchups: TacticMatchupDetail[] = [];
+
+    for (const myMainTech of mainTechniques) {
+      // 각 Main tactic에 대해 다른 Main tactic과의 상성 계산
+      for (const opponentMainTech of mainTechniques) {
+        if (myMainTech.id === opponentMainTech.id) continue;
+
+        // Main vs Main 상성 계산: Main의 모든 Sub tactic들의 승패를 합산
+        // myMainTech의 모든 tactic ID (Main + 모든 Sub)
+        const myTacticIds = [
+          myMainTech.id,
+          ...myMainTech.children.map(sub => sub.id)
+        ];
+        
+        // opponentMainTech의 모든 tactic ID (Main + 모든 Sub)
+        const opponentTacticIds = [
+          opponentMainTech.id,
+          ...opponentMainTech.children.map(sub => sub.id)
+        ];
+
+        // 모든 조합의 승패 합산
+        let winCount = 0;
+        let loseCount = 0;
+        for (const marking of markings) {
+          const myTechId = marking.myTechnique?.id;
+          const opponentTechId = marking.opponentTechnique?.id;
+          
+          if (
+            myTechId && opponentTechId &&
+            myTacticIds.includes(myTechId) &&
+            opponentTacticIds.includes(opponentTechId)
+          ) {
+            if (marking.result === 'win') winCount++;
+            else if (marking.result === 'lose') loseCount++;
+          }
+        }
+
+        const total = winCount + loseCount;
+        const winRate = total > 0 ? (winCount / total) * 100 : 0;
+
+        // Sub tactic 상성 계산 (Sub vs Sub, Sub vs Main, Main vs Sub 모두 포함)
+        const subMatchups: TacticMatchupDetail[] = [];
+        
+        // myMainTech의 모든 tactic (Main + Sub)
+        const myAllTactics = [
+          { id: myMainTech.id, name: myMainTech.name, isMain: true, parentId: null },
+          ...myMainTech.children.map(sub => ({
+            id: sub.id,
+            name: sub.name,
+            isMain: false,
+            parentId: sub.parentId,
+          }))
+        ];
+        
+        // opponentMainTech의 모든 tactic (Main + Sub)
+        const opponentAllTactics = [
+          { id: opponentMainTech.id, name: opponentMainTech.name, isMain: true, parentId: null },
+          ...opponentMainTech.children.map(sub => ({
+            id: sub.id,
+            name: sub.name,
+            isMain: false,
+            parentId: sub.parentId,
+          }))
+        ];
+        
+        // Main vs Main을 제외한 모든 조합 계산
+        for (const myTactic of myAllTactics) {
+          for (const opponentTactic of opponentAllTactics) {
+            // Main vs Main은 제외 (이미 상위에서 계산됨)
+            if (myTactic.isMain && opponentTactic.isMain) continue;
+            
+            const matchupData = markings.filter(
+              (m) =>
+                m.myTechnique?.id === myTactic.id &&
+                m.opponentTechnique?.id === opponentTactic.id,
+            );
+
+            let winCount = 0;
+            let loseCount = 0;
+            for (const m of matchupData) {
+              if (m.result === 'win') winCount++;
+              else if (m.result === 'lose') loseCount++;
+            }
+
+            const total = winCount + loseCount;
+            const winRate = total > 0 ? (winCount / total) * 100 : 0;
+
+            if (total > 0) {
+              subMatchups.push({
+                myTactic: {
+                  id: myTactic.id,
+                  name: myTactic.name,
+                  isMain: myTactic.isMain,
+                  parentId: myTactic.parentId,
+                },
+                opponentTactic: {
+                  id: opponentTactic.id,
+                  name: opponentTactic.name,
+                  isMain: opponentTactic.isMain,
+                  parentId: opponentTactic.parentId,
+                },
+                winCount,
+                loseCount,
+                winRate,
+              });
+            }
+          }
+        }
+
+        if (total > 0 || subMatchups.length > 0) {
+          tacticMatchups.push({
+            myTactic: {
+              id: myMainTech.id,
+              name: myMainTech.name,
+              isMain: true,
+              parentId: null,
+            },
+            opponentTactic: {
+              id: opponentMainTech.id,
+              name: opponentMainTech.name,
+              isMain: true,
+              parentId: null,
+            },
+            winCount,
+            loseCount,
+            winRate,
+            subMatchups: subMatchups.length > 0 ? subMatchups : undefined,
+          });
+        }
+      }
+    }
+
+    return {
+      topScoringTactics,
+      topConcededTactics,
+      tacticMatchups,
     };
   }
 }
