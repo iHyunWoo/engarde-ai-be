@@ -30,6 +30,8 @@ export interface TacticMatchupDetail {
   winCount: number;
   loseCount: number;
   winRate: number;
+  attemptCount: number;
+  attemptWinRate: number; // 0-100
   // Sub tactics 상성 (Main을 클릭했을 때 보여줄 상세 정보)
   subMatchups?: TacticMatchupDetail[];
 }
