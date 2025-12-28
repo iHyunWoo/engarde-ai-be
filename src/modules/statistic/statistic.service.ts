@@ -358,18 +358,6 @@ export class StatisticService {
       },
     });
 
-    // 모든 TechniqueAttempt 가져오기 (시도 횟수 계산용)
-    const techniqueAttempts = await this.prisma.techniqueAttempt.findMany({
-      where: {
-        userId: userId,
-        matchId: { in: matchIds },
-        deletedAt: null,
-        technique: {
-          deletedAt: null,
-        },
-      },
-    });
-
     // 1. 득점한 횟수 높은 tactic (전체)
     const scoringCounts = new Map<number, { name: string; count: number; isMain: boolean; parentId: number | null }>();
     for (const marking of markings) {
@@ -440,9 +428,8 @@ export class StatisticService {
     const tacticMatchups: TacticMatchupDetail[] = [];
 
     for (const myMainTech of mainTechniques) {
-      // 각 Main tactic에 대해 다른 Main tactic과의 상성 계산
+      // 각 Main tactic에 대해 다른 Main tactic과의 상성 계산 (같은 tactic끼리도 포함)
       for (const opponentMainTech of mainTechniques) {
-        if (myMainTech.id === opponentMainTech.id) continue;
 
         // Main vs Main 상성 계산: Main의 모든 Sub tactic들의 승패를 합산
         // myMainTech의 모든 tactic ID (Main + 모든 Sub)
@@ -460,6 +447,7 @@ export class StatisticService {
         // 모든 조합의 승패 합산
         let winCount = 0;
         let loseCount = 0;
+        let attemptCount = 0;
         for (const marking of markings) {
           const myTechId = marking.myTechnique?.id;
           const opponentTechId = marking.opponentTechnique?.id;
@@ -471,20 +459,15 @@ export class StatisticService {
           ) {
             if (marking.result === 'win') winCount++;
             else if (marking.result === 'lose') loseCount++;
-          }
-        }
-
-        // matchIds 전체에서 myTacticIds에 포함된 technique들의 시도 횟수 합산
-        let attemptCount = 0;
-        for (const attempt of techniqueAttempts) {
-          if (myTacticIds.includes(attempt.techniqueId)) {
-            attemptCount += attempt.attemptCount;
+            else if (marking.result === 'attempt') attemptCount++;
           }
         }
 
         const total = winCount + loseCount;
         const winRate = total > 0 ? (winCount / total) * 100 : 0;
-        const attemptWinRate = attemptCount > 0 ? (winCount / attemptCount) * 100 : 0;
+        const attemptWinRate = (winCount + loseCount + attemptCount) > 0 
+          ? (winCount / (winCount + loseCount + attemptCount)) * 100 
+          : 0;
 
         // Sub tactic 상성 계산 (Sub vs Sub, Sub vs Main, Main vs Sub 모두 포함)
         const subMatchups: TacticMatchupDetail[] = [];
@@ -525,24 +508,20 @@ export class StatisticService {
 
             let winCount = 0;
             let loseCount = 0;
+            let attemptCount = 0;
             for (const m of matchupData) {
               if (m.result === 'win') winCount++;
               else if (m.result === 'lose') loseCount++;
-            }
-
-            // matchIds 전체에서 myTactic의 시도 횟수 합산
-            let attemptCount = 0;
-            for (const attempt of techniqueAttempts) {
-              if (attempt.techniqueId === myTactic.id) {
-                attemptCount += attempt.attemptCount;
-              }
+              else if (m.result === 'attempt') attemptCount++;
             }
 
             const total = winCount + loseCount;
             const winRate = total > 0 ? (winCount / total) * 100 : 0;
-            const attemptWinRate = attemptCount > 0 ? (winCount / attemptCount) * 100 : 0;
+            const attemptWinRate = (winCount + loseCount + attemptCount) > 0 
+              ? (winCount / (winCount + loseCount + attemptCount)) * 100 
+              : 0;
 
-            if (total > 0) {
+            if (total > 0 || attemptCount > 0) {
               subMatchups.push({
                 myTactic: {
                   id: myTactic.id,
@@ -566,7 +545,7 @@ export class StatisticService {
           }
         }
 
-        if (total > 0 || subMatchups.length > 0) {
+        if (total > 0 || attemptCount > 0 || subMatchups.length > 0) {
           tacticMatchups.push({
             myTactic: {
               id: myMainTech.id,
