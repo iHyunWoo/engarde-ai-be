@@ -17,6 +17,7 @@ import { VerifyEmailRequest } from './dto/verify-email.request';
 import { SendPasswordResetRequest } from './dto/send-password-reset.request';
 import { ResetPasswordRequest } from './dto/reset-password.request';
 import { ResendVerificationEmailRequest } from './dto/resend-verification-email.request';
+import { ChangePasswordRequest } from './dto/change-password.request';
 
 @Injectable()
 export class AuthService {
@@ -288,6 +289,38 @@ export class AuthService {
         passwordHash: hashed,
         passwordResetToken: null,
         passwordResetTokenExpiresAt: null,
+      },
+    });
+
+    return;
+  }
+
+  /**
+   * 일반 유저 비밀번호 변경
+   */
+  async changePassword(userId: number, dto: ChangePasswordRequest) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new AppError('USER_NOT_FOUND');
+    }
+
+    // 현재 비밀번호 확인
+    const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new AppError('INVALID_CREDENTIALS');
+    }
+
+    // 새 비밀번호 암호화
+    const hashed = await this.hashPassword(dto.newPassword);
+
+    // 비밀번호 변경
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: hashed,
       },
     });
 

@@ -11,6 +11,10 @@ import { VerifyEmailRequest } from './dto/verify-email.request';
 import { SendPasswordResetRequest } from './dto/send-password-reset.request';
 import { ResetPasswordRequest } from './dto/reset-password.request';
 import { ResendVerificationEmailRequest } from './dto/resend-verification-email.request';
+import { ChangePasswordRequest } from './dto/change-password.request';
+import { Authenticated } from '@/shared/decorators/authenticated.decorator';
+import { User } from '@/shared/decorators/user.decorator';
+import type { JwtPayload } from '@/modules/auth/guards/jwt-payload';
 
 type Headers = Record<string, string | string[] | undefined>;
 
@@ -88,5 +92,16 @@ export class AuthController {
   async resetPassword(@TypedBody() dto: ResetPasswordRequest) {
     const result = await this.authService.resetPassword(dto);
     return new BaseResponse(200, '비밀번호 재설정 성공', result);
+  }
+
+  @TypedRoute.Post('change-password')
+  @HttpCode(200)
+  @Authenticated()
+  async changePassword(
+    @User() user: JwtPayload,
+    @TypedBody() dto: ChangePasswordRequest,
+  ) {
+    const result = await this.authService.changePassword(user.userId, dto);
+    return new BaseResponse(200, '비밀번호 변경 성공', result);
   }
 }

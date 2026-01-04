@@ -600,10 +600,56 @@ export class AdminService {
     return { success: true };
   }
 
+  /**
+   * 어드민이 특정 유저의 비밀번호를 초기화
+   */
+  async resetUserPassword(adminUserId: number, targetUserId: number) {
+    // ADMIN 권한 확인
+    const admin = await this.prisma.user.findUnique({ where: { id: adminUserId } });
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new AppError('UNAUTHORIZED');
+    }
+
+    // 대상 유저 조회
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
+
+    if (!targetUser) {
+      throw new AppError('USER_NOT_FOUND');
+    }
+
+    // 랜덤 비밀번호 생성 (12자리, 영문 대소문자 + 숫자)
+    const randomPassword = this.generateRandomPassword(12);
+
+    // 비밀번호 암호화
+    const hashed = await this.authService.hashPassword(randomPassword);
+
+    // 비밀번호 초기화
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: {
+        passwordHash: hashed,
+      },
+    });
+
+    // 초기화된 비밀번호 반환 (어드민이 유저에게 전달할 수 있도록)
+    return { newPassword: randomPassword };
+  }
+
   private generateRandomCode(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
     for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  private generateRandomPassword(length: number = 12): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;

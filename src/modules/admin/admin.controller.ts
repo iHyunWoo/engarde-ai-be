@@ -70,6 +70,18 @@ export class AdminController {
     return new BaseResponse(HttpStatus.OK, '유저 탈퇴 처리 성공', result);
   }
 
+  @TypedRoute.Post('users/:userId/reset-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @RequireRoles('ADMIN')
+  async resetUserPassword(
+    @User() user: JwtPayload,
+    @TypedParam('userId') userId: string,
+  ) {
+    const result = await this.adminService.resetUserPassword(user.userId, Number(userId));
+    return new BaseResponse(HttpStatus.OK, '유저 비밀번호 초기화 성공', result);
+  }
+
   @TypedRoute.Get('deleted-users')
   @HttpCode(HttpStatus.OK)
   @UseGuards(RolesGuard)
