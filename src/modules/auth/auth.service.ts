@@ -16,6 +16,7 @@ import { randomBytes } from 'crypto';
 import { VerifyEmailRequest } from './dto/verify-email.request';
 import { SendPasswordResetRequest } from './dto/send-password-reset.request';
 import { ResetPasswordRequest } from './dto/reset-password.request';
+import { ResendVerificationEmailRequest } from './dto/resend-verification-email.request';
 
 @Injectable()
 export class AuthService {
@@ -188,6 +189,43 @@ export class AuthService {
         emailVerificationTokenExpiresAt: null,
       },
     });
+
+    return;
+  }
+
+  /**
+   * 이메일 인증 재발송
+   */
+  async resendVerificationEmail(dto: ResendVerificationEmailRequest) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (!user) {
+      // 보안을 위해 사용자가 존재하지 않아도 성공으로 처리
+      return;
+    }
+
+    // 이미 인증된 경우 성공으로 처리
+    if (user.emailVerified) {
+      return;
+    }
+
+    // 새로운 인증 토큰 생성
+    const verificationToken = randomBytes(32).toString('hex');
+    const verificationTokenExpiresAt = new Date();
+    verificationTokenExpiresAt.setHours(verificationTokenExpiresAt.getHours() + 24); // 24시간 후 만료
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpiresAt: verificationTokenExpiresAt,
+      },
+    });
+
+    // 이메일 인증 메일 재발송
+    await this.emailService.sendVerificationEmail(dto.email, verificationToken);
 
     return;
   }

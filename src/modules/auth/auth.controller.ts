@@ -10,6 +10,7 @@ import { RefreshHeaders } from '@/modules/auth/dto/refresh.headers';
 import { VerifyEmailRequest } from './dto/verify-email.request';
 import { SendPasswordResetRequest } from './dto/send-password-reset.request';
 import { ResetPasswordRequest } from './dto/reset-password.request';
+import { ResendVerificationEmailRequest } from './dto/resend-verification-email.request';
 
 type Headers = Record<string, string | string[] | undefined>;
 
@@ -61,6 +62,15 @@ export class AuthController {
   async verifyEmail(@TypedBody() dto: VerifyEmailRequest) {
     const result = await this.authService.verifyEmail(dto);
     return new BaseResponse(200, '이메일 인증 성공', result);
+  }
+
+  @TypedRoute.Post('resend-verification-email')
+  @HttpCode(200)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 1, ttl: 4 * 60 * 1000 } }) // 4분에 1번만 허용
+  async resendVerificationEmail(@TypedBody() dto: ResendVerificationEmailRequest) {
+    const result = await this.authService.resendVerificationEmail(dto);
+    return new BaseResponse(200, '이메일 인증 메일이 재발송되었습니다', result);
   }
 
   @TypedRoute.Post('send-password-reset')
