@@ -425,11 +425,45 @@ export class StatisticService {
       },
     });
 
+    // null을 나타내는 가상의 tactic 추가 (id: 0, name: "None", isMain: true)
+    const noneTactic: {
+      id: number;
+      name: string;
+      parentId: number | null;
+      userId: number;
+      createdAt: Date;
+      deletedAt: Date | null;
+      updatedAt: Date;
+      lastUsedAt: Date;
+      children: Array<{
+        id: number;
+        name: string;
+        parentId: number | null;
+        userId: number;
+        createdAt: Date;
+        deletedAt: Date | null;
+        updatedAt: Date;
+        lastUsedAt: Date;
+      }>;
+    } = {
+      id: 0,
+      name: 'None',
+      parentId: null,
+      userId: userId,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+      lastUsedAt: new Date(),
+      children: [],
+    };
+
+    const allMainTechniques = [noneTactic, ...mainTechniques];
+
     const tacticMatchups: TacticMatchupDetail[] = [];
 
-    for (const myMainTech of mainTechniques) {
+    for (const myMainTech of allMainTechniques) {
       // 각 Main tactic에 대해 다른 Main tactic과의 상성 계산 (같은 tactic끼리도 포함)
-      for (const opponentMainTech of mainTechniques) {
+      for (const opponentMainTech of allMainTechniques) {
 
         // Main vs Main 상성 계산: Main의 모든 Sub tactic들의 승패를 합산
         // myMainTech의 모든 tactic ID (Main + 모든 Sub)
@@ -449,11 +483,11 @@ export class StatisticService {
         let loseCount = 0;
         let attemptCount = 0;
         for (const marking of markings) {
-          const myTechId = marking.myTechnique?.id;
-          const opponentTechId = marking.opponentTechnique?.id;
+          const myTechId = marking.myTechnique?.id ?? (myMainTech.id === 0 ? 0 : null);
+          const opponentTechId = marking.opponentTechnique?.id ?? (opponentMainTech.id === 0 ? 0 : null);
           
           if (
-            myTechId && opponentTechId &&
+            myTechId !== null && opponentTechId !== null &&
             myTacticIds.includes(myTechId) &&
             opponentTacticIds.includes(opponentTechId)
           ) {
@@ -475,7 +509,7 @@ export class StatisticService {
         // myMainTech의 모든 tactic (Main + Sub)
         const myAllTactics = [
           { id: myMainTech.id, name: myMainTech.name, isMain: true, parentId: null },
-          ...myMainTech.children.map(sub => ({
+          ...(myMainTech.children || []).map(sub => ({
             id: sub.id,
             name: sub.name,
             isMain: false,
@@ -486,7 +520,7 @@ export class StatisticService {
         // opponentMainTech의 모든 tactic (Main + Sub)
         const opponentAllTactics = [
           { id: opponentMainTech.id, name: opponentMainTech.name, isMain: true, parentId: null },
-          ...opponentMainTech.children.map(sub => ({
+          ...(opponentMainTech.children || []).map(sub => ({
             id: sub.id,
             name: sub.name,
             isMain: false,
@@ -501,9 +535,11 @@ export class StatisticService {
             if (myTactic.isMain && opponentTactic.isMain) continue;
             
             const matchupData = markings.filter(
-              (m) =>
-                m.myTechnique?.id === myTactic.id &&
-                m.opponentTechnique?.id === opponentTactic.id,
+              (m) => {
+                const mMyTechId = m.myTechnique?.id ?? (myTactic.id === 0 ? 0 : null);
+                const mOpponentTechId = m.opponentTechnique?.id ?? (opponentTactic.id === 0 ? 0 : null);
+                return mMyTechId === myTactic.id && mOpponentTechId === opponentTactic.id;
+              }
             );
 
             let winCount = 0;
