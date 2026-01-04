@@ -14,11 +14,13 @@ import { TeamModule } from '@/modules/team/team.module';
 import { UserModule } from '@/modules/user/user.module';
 import { AdminModule } from '@/modules/admin/admin.module';
 import { CoachModule } from '@/modules/coach/coach.module';
+import { EmailModule } from '@/shared/lib/email/email.module';
 
 @Module({
   imports: [
     HttpContextModule,
     PrismaModule,
+    EmailModule,
     AuthModule,
     MatchModule,
     FileModule,

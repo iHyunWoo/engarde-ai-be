@@ -20,6 +20,11 @@ model User {
   deletedAt              DateTime?
   adminInviteCode        String?            @unique
   adminInviteCodeExpiresAt DateTime?
+  emailVerified          Boolean            @default(false)
+  emailVerificationToken String?            @unique
+  emailVerificationTokenExpiresAt DateTime?
+  passwordResetToken     String?            @unique
+  passwordResetTokenExpiresAt DateTime?
   markings               Marking[]
   matches                Match[]
   notes                  Note[]

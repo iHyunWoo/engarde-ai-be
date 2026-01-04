@@ -6,12 +6,16 @@ import { SignupDto } from './dto/signup.dto';
 import { LoginRequest } from './dto/login.request';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { Response } from 'express';
 import { LoginResponse } from '@/modules/auth/dto/login.response';
 import { CookieJar } from '@/shared/lib/http/cookie-jar';
 import { AppError } from '@/shared/error/app-error';
 import { JwtPayload } from '@/modules/auth/guards/jwt-payload';
 import { TechniqueService } from '@/modules/technique/technique.service';
+import { EmailService } from '@/shared/lib/email/email.service';
+import { randomBytes } from 'crypto';
+import { VerifyEmailRequest } from './dto/verify-email.request';
+import { SendPasswordResetRequest } from './dto/send-password-reset.request';
+import { ResetPasswordRequest } from './dto/reset-password.request';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +24,7 @@ export class AuthService {
     private jwtService: JwtService,
     private cookieJar: CookieJar,
     private readonly techniqueService: TechniqueService,
+    private readonly emailService: EmailService,
   ) {}
 
   async signup(dto: SignupDto) {
@@ -48,17 +53,29 @@ export class AuthService {
     if (!team && !adminUser) throw new AppError('INVALID_INVITE_CODE');
 
     const hashed = await this.hashPassword(dto.password);
+    
+    // 이메일 인증 토큰 생성
+    const verificationToken = randomBytes(32).toString('hex');
+    const verificationTokenExpiresAt = new Date();
+    verificationTokenExpiresAt.setHours(verificationTokenExpiresAt.getHours() + 24); // 24시간 후 만료
+
     const newUser = await this.prisma.user.create({
       data: {
         email: dto.email,
         name: dto.name,
         passwordHash: hashed,
         teamId: team?.id ?? null, // admin invite code면 null
+        emailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpiresAt: verificationTokenExpiresAt,
       },
     });
 
     // 생성된 유저에 default 기술 넣기
-    await this.techniqueService.setDefaultTechnique(newUser.id)
+    await this.techniqueService.setDefaultTechnique(newUser.id);
+
+    // 이메일 인증 메일 발송
+    await this.emailService.sendVerificationEmail(dto.email, verificationToken);
 
     return;
   }
@@ -71,6 +88,10 @@ export class AuthService {
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid)
       throw new AppError('INVALID_CREDENTIALS');
+
+    if (!user.emailVerified) {
+      throw new AppError('EMAIL_NOT_VERIFIED');
+    }
 
     this.issueTokens(user.id, dto.rememberMe);
 
@@ -131,6 +152,105 @@ export class AuthService {
       sameSite: 'none',
       secure: true,
       maxAge: 0,
+    });
+
+    return;
+  }
+
+  /**
+   * 이메일 인증
+   */
+  async verifyEmail(dto: VerifyEmailRequest) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        emailVerificationToken: dto.token,
+      },
+    });
+
+    if (!user) {
+      throw new AppError('INVALID_VERIFICATION_TOKEN');
+    }
+
+    if (user.emailVerificationTokenExpiresAt && user.emailVerificationTokenExpiresAt < new Date()) {
+      throw new AppError('VERIFICATION_TOKEN_EXPIRED');
+    }
+
+    if (user.emailVerified) {
+      // 이미 인증된 경우 성공으로 처리
+      return;
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationTokenExpiresAt: null,
+      },
+    });
+
+    return;
+  }
+
+  /**
+   * 비밀번호 재설정 이메일 발송
+   */
+  async sendPasswordResetEmail(dto: SendPasswordResetRequest) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (!user) {
+      // 보안을 위해 사용자가 존재하지 않아도 성공으로 처리
+      return;
+    }
+
+    // 비밀번호 재설정 토큰 생성
+    const resetToken = randomBytes(32).toString('hex');
+    const resetTokenExpiresAt = new Date();
+    resetTokenExpiresAt.setHours(resetTokenExpiresAt.getHours() + 1); // 1시간 후 만료
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: resetToken,
+        passwordResetTokenExpiresAt: resetTokenExpiresAt,
+      },
+    });
+
+    // 비밀번호 재설정 이메일 발송
+    await this.emailService.sendPasswordResetEmail(dto.email, resetToken);
+
+    return;
+  }
+
+  /**
+   * 비밀번호 재설정
+   */
+  async resetPassword(dto: ResetPasswordRequest) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: dto.token,
+      },
+    });
+
+    if (!user) {
+      throw new AppError('INVALID_RESET_TOKEN');
+    }
+
+    if (user.passwordResetTokenExpiresAt && user.passwordResetTokenExpiresAt < new Date()) {
+      throw new AppError('RESET_TOKEN_EXPIRED');
+    }
+
+    const hashed = await this.hashPassword(dto.password);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: hashed,
+        passwordResetToken: null,
+        passwordResetTokenExpiresAt: null,
+      },
     });
 
     return;

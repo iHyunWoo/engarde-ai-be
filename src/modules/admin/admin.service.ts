@@ -333,7 +333,7 @@ export class AdminService {
       }
     }
 
-    // 코치 계정 생성
+    // 코치 계정 생성 (관리자가 생성한 코치는 이메일 인증 없이 바로 사용 가능)
     const newCoach = await this.prisma.user.create({
       data: {
         email: dto.email,
@@ -341,6 +341,7 @@ export class AdminService {
         passwordHash: hashed,
         role: 'COACH',
         teamId: dto.teamId,
+        emailVerified: true,
       },
     });
 

@@ -5,6 +5,11 @@ export type ErrorKey =
   | 'API_KEY_MISMATCH'
   | 'INVALID_CREDENTIALS'
   | 'INVALID_INVITE_CODE'
+  | 'EMAIL_NOT_VERIFIED'
+  | 'INVALID_VERIFICATION_TOKEN'
+  | 'VERIFICATION_TOKEN_EXPIRED'
+  | 'INVALID_RESET_TOKEN'
+  | 'RESET_TOKEN_EXPIRED'
 
   // FILE
   | 'FILE_CONTENT_TYPE_MISSING'
@@ -56,6 +61,11 @@ export const ERRORS: Record<ErrorKey, { code: number; message: string }> = {
   API_KEY_MISMATCH:   { code: 403, message: 'API_KEY_MISMATCH' },
   INVALID_CREDENTIALS: { code: 400, message: 'The email or password is incorrect' },
   INVALID_INVITE_CODE: { code: 400, message: 'Invalid invite code' },
+  EMAIL_NOT_VERIFIED: { code: 403, message: '이메일 인증이 필요합니다' },
+  INVALID_VERIFICATION_TOKEN: { code: 400, message: '유효하지 않은 인증 토큰입니다' },
+  VERIFICATION_TOKEN_EXPIRED: { code: 400, message: '인증 토큰이 만료되었습니다' },
+  INVALID_RESET_TOKEN: { code: 400, message: '유효하지 않은 비밀번호 재설정 토큰입니다' },
+  RESET_TOKEN_EXPIRED: { code: 400, message: '비밀번호 재설정 토큰이 만료되었습니다' },
 
   //FILE
   FILE_CONTENT_TYPE_MISSING: {code: 400, message: 'Content Type is required'},
